@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026 立山黑部 & 古川祭 | 深色模式 (住宿更新版)</title>
+    <title>2026 立山黑部 & 古川祭 | Pro 整合版 V59</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -19,22 +19,25 @@
             theme: {
                 extend: {
                     colors: {
-                        bg: '#020617', // Slate 950
-                        surface: '#0f172a', // Slate 900
-                        surfaceLight: '#1e293b', // Slate 800
-                        primary: '#38bdf8', // Sky 400
-                        primaryDim: '#0ea5e9', // Sky 500
-                        textMain: '#f8fafc', // Slate 50
-                        textSub: '#94a3b8', // Slate 400
-                        accent: '#fbbf24', // Amber 400
-                        danger: '#ef4444', // Red 500
-                        border: '#1e293b', // Slate 800
+                        bg: '#09090b', 
+                        surface: '#18181b', 
+                        surfaceLight: '#27272a', 
+                        primary: '#38bdf8', 
+                        primaryDim: '#0284c7', 
+                        textMain: '#fafafa', 
+                        textSub: '#a1a1aa', 
+                        accent: '#fbbf24', 
+                        danger: '#f87171', 
+                        food: '#f97316', 
+                        border: '#27272a', 
                     },
                     fontFamily: {
                         sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
                     },
                     boxShadow: {
-                        'glow': '0 0 20px -5px rgba(56, 189, 248, 0.15)',
+                        'glow-primary': '0 0 20px -5px rgba(56, 189, 248, 0.25)',
+                        'glow-accent': '0 0 20px -5px rgba(251, 191, 36, 0.25)',
+                        'glow-food': '0 0 20px -5px rgba(249, 115, 22, 0.25)',
                     }
                 }
             }
@@ -50,48 +53,67 @@
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: #020617;
-            color: #f8fafc;
+            background-color: #09090b;
+            color: #fafafa;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
         }
         
         .app-card {
-            background: #0f172a;
+            background: linear-gradient(145deg, #18181b 0%, #09090b 100%);
             border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            border: 1px solid #1e293b;
-            transition: transform 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid #27272a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
         }
         
-        /* Luggage Alert Box */
-        .luggage-box {
-            background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(15, 23, 42, 0.0));
-            border-left: 4px solid #38bdf8;
+        .task-box {
+            background: linear-gradient(to right, rgba(56, 189, 248, 0.1), transparent);
+            border-left: 3px solid #38bdf8;
         }
 
-        /* Warning Box */
-        .warning-box {
-            background: linear-gradient(to right, rgba(239, 68, 68, 0.1), rgba(15, 23, 42, 0.0));
-            border-left: 4px solid #ef4444;
+        .alert-box {
+            background: linear-gradient(to right, rgba(248, 113, 113, 0.1), transparent);
+            border-left: 3px solid #f87171;
         }
 
-        /* Festival Box */
         .festival-box {
-             background: linear-gradient(to right, rgba(251, 191, 36, 0.1), rgba(15, 23, 42, 0.0));
-             border-left: 4px solid #fbbf24;
+             background: linear-gradient(to right, rgba(251, 191, 36, 0.1), transparent);
+             border-left: 3px solid #fbbf24;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+        .food-box {
+             background: linear-gradient(to right, rgba(249, 115, 22, 0.08), transparent);
+             border-left: 3px solid #f97316;
         }
-        .animate-slide-up {
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-card {
+            animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #38bdf8; color: #09090b; padding: 8px 16px; border-radius: 99px;
+            font-size: 12px; font-weight: bold; z-index: 100;
+            box-shadow: 0 4px 12px rgba(56,189,248,0.3);
+            transition: opacity 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -100,533 +122,262 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- Configuration ---
-        const CONFIG = {
-            weatherApiBase: "https://archive-api.open-meteo.com/v1/archive",
-        };
+        const CONFIG = { weatherApiBase: "https://archive-api.open-meteo.com/v1/archive" };
 
-        // --- Data: Coupons ---
         const COUPONS_DATA = [
-            { "name": "Bic Camera", "discount": "最高折 17%", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_250820.png", "tags": ["電器", "藥妝"], "type": "shopping" },
-            { "name": "唐吉訶德", "discount": "免稅 + 5% OFF", "expiry": "無期限", "final_url": "https://japanportal.donki-global.com/coupon/?ptcd=0076003303", "tags": ["雜貨", "深夜"], "type": "shopping" },
-            { "name": "松本清", "discount": "免稅 + 7% OFF", "expiry": "2025/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/matsumoto_2025.jpg", "tags": ["藥妝"], "type": "shopping" },
-            { "name": "大丸松坂屋", "discount": "95折優惠", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/daimaru_250820.pdf", "tags": ["百貨", "精品"], "type": "department" },
-            { "name": "愛電王 Edion", "discount": "免稅 + 7% OFF", "expiry": "2026/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/edion2025.jpg", "tags": ["電器"], "type": "shopping" },
-            { "name": "Sundrug", "discount": "最高折 17%", "expiry": "無期限", "final_url": "https://www.funtime.com.tw/travelstore/coupon/sundrug%20_funtime.jpg", "tags": ["藥妝"], "type": "shopping" },
-             { "name": "名鐵百貨", "discount": "免稅 + 5%", "expiry": "2026/02/28", "final_url": "https://www.funtime.com.tw/travelstore/coupon/meitetsu_250516.png", "tags": ["名古屋", "百貨"], "type": "department" },
+            { "name": "Donki唐吉訶德", "discount": "滿額免稅，再折5%", "expiry": "無期限", "final_url": "https://japanportal.donki-global.com/coupon/?ptcd=0076003303", "tags": ["雜貨", "深夜"] },
+            { "name": "Bic Camera", "discount": "滿額免稅，最高再折7%", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "藥妝"] },
+            { "name": "Salonia", "discount": "折5%(與Bic Camera併用)", "expiry": "2026/4/30", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "美容"] },
+            { "name": "愛電王Edion", "discount": "最高免稅+7%", "expiry": "2026/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/edion2025.jpg", "tags": ["電器"] },
+            { "name": "成田免稅店", "discount": "95折優惠", "expiry": "2026/3/31", "final_url": "https://duty-free-japan.jp/narita/ta/content/coupon2833-30.html", "tags": ["免稅店", "機場"] },
+            { "name": "SUNDRUG", "discount": "最高免稅+7%", "expiry": "無期限", "final_url": "https://www.funtime.com.tw/travelstore/coupon/sundrug%20_funtime.jpg", "tags": ["藥妝"] },
+            { "name": "名鐵百貨", "discount": "免稅+5%", "expiry": "2026/2/28", "final_url": "https://www.funtime.com.tw/travelstore/coupon/meitetsu_250516.png", "tags": ["百貨", "名古屋"] }
         ];
 
-        // --- Data: Itinerary (Updated V52 with Hotels) ---
+        // V59 Integrated Buffer Times & Navigation Tips
         const ITINERARY_DATA = [
             {
-                id: 1,
-                date: "2026-04-15",
-                displayDate: "4/15 (三)",
-                title: "抵達東京",
-                city: "東京 (Tokyo)",
-                lat: 35.6895, lon: 139.6917,
+                id: 1, date: "2026-04-15", displayDate: "4/15 (三)", title: "抵達東京", city: "東京 (Tokyo)", lat: 35.6895, lon: 139.6917,
                 planA: [
-                    { time: "20:30", title: "抵達成田機場 (NRT)", type: "flight", detail: "入境手續約 1小時。建議先填好 Visit Japan Web。" },
-                    { 
-                        time: "21:30 - 22:15", 
-                        title: "Skyliner 往上野/鶯谷", 
-                        type: "transport", 
-                        detail: "Skyliner 至京成上野站 (45分)。\n轉乘 JR 山手線/京濱東北線 至 鶯谷站 (1站)。", 
-                        cost: "¥2,570" 
-                    },
-                    { time: "23:00", title: "入住東横INN鶯谷駅前", type: "hotel", detail: "Check-in 後稍作休息。", highlight: false },
-                    { 
-                        time: "⚠️ 重要任務", 
-                        title: "索取宅急便運單", 
-                        type: "luggage", 
-                        detail: "向櫃檯索取「宅急便 (Ta-Q-Bin)」運單，填好 Day 3 入住的【東横INN金沢兼六園香林坊】地址。\n明早寄出大行李。" 
-                    }
-                ],
-                planB: null
+                    { time: "20:30", title: "抵達成田機場 (NRT)", type: "flight", detail: "入境預計 1hr。建議機上先填好 Visit Japan Web QR Code。" },
+                    { time: "21:30 - 22:15", title: "Skyliner 往上野/鶯谷", type: "transport", detail: "Skyliner 至京成上野站 (45分)。\n轉乘 JR 山手線 至 鶯谷站 (1站)。", cost: "¥2,570" },
+                    { time: "23:00", title: "入住東横INN鶯谷駅前", type: "hotel", detail: "Check-in 放行李。飯店就在鶯谷站北口步行 2 分鐘。", address: "東京都台東区根岸1-4-1" },
+                    { time: "⚠️ 睡前任務", title: "填寫宅急便運單", type: "task", detail: "向櫃檯索取運單，寄往【東横INN金沢兼六園香林坊】。\n指定抵達日：4/17 (後天)。" }
+                ], planB: null
             },
             {
-                id: 2,
-                date: "2026-04-16",
-                displayDate: "4/16 (四)",
-                title: "東京 -> 長野",
-                city: "東京/長野",
-                lat: 36.6485, lon: 138.1942,
+                id: 2, date: "2026-04-16", displayDate: "4/16 (四)", title: "東京 -> 長野大町", city: "長野 (Nagano)", lat: 36.6485, lon: 138.1942,
                 planA: [
-                    { 
-                        time: "08:30", 
-                        title: "【重要：寄行李】", 
-                        type: "luggage", 
-                        detail: "於東横INN櫃檯將大喼寄往金澤【東横INN金沢兼六園香林坊】(指定 4/17 抵達)。\n身上裝備：20-30L 背囊 (1晚衣物、貴重品)。一身輕便！" 
+                    { time: "08:30", title: "【寄行李】去金澤", type: "task", detail: "飯店櫃檯寄出大喼。今天起只背小背包 (1晚衣物)，準備山區行軍！", address: "石川県金沢市香林坊2-2-5" },
+                    { time: "09:00 - 12:00", title: "上野購物 & 早午餐", type: "food", detail: "鶯谷去上野只要 2 分鐘。阿美橫丁最後補貨零食。", highlight: true,
+                      recs: [
+                          {n: "牛かつ もと村", t: "炸牛排", desc: "自煎酥脆炸牛排，無海鮮"},
+                          {n: "肉之大山", t: "和牛可樂餅", desc: "阿美橫丁排隊美食"}
+                      ]
                     },
-                    { 
-                        time: "09:00 - 15:00", 
-                        title: "東京自由活動", 
-                        type: "shop", 
-                        detail: "從鶯谷出發很方便：\n1. 上野公園/阿美橫丁 (步行或電車1站)\n2. 淺草雷門 (觀光客模式)\n3. 銀座 (食個靚 Lunch + Shopping)", 
-                        highlight: true
+                    { time: "12:30 - 14:03", title: "新幹線 Hakutaka 563號", type: "transport", detail: "上野站 ➔ 長野站。\n上野新幹線月台在地底深處，建議 12:10 就要到站月台等候。", cost: "¥8,000" },
+                    { time: "14:03 - 14:30", title: "🚶 轉車指引：長野站", type: "task", detail: "【27分鐘緩衝】\n1. 下車後上樓出新幹線閘口。\n2. 找「東口 (East Exit)」指標。\n3. 下扶梯到 1 樓找到【25 號月台】。", highlight: true },
+                    { time: "14:30 - 15:50", title: "Alpico 特急巴士 (尾班)", type: "alert", detail: "長野站東口 25號月台 ➔ 大町溫泉鄉。\n🚨 注意：春季直達巴士最遲 14:30 開出，絕對唔可以錯過！", cost: "¥2,600" },
+                    { time: "16:00 - 18:00", title: "大町溫泉鄉散策", type: "spot", detail: "入住【織花】後：\n1. 藥師堂散策：森林系美拍\n2. 森林足湯：看殘雪泡腳",
+                      recs: [
+                          {n: "御燒 (Oyaki)", t: "信州名物", desc: "烤麵餅包野菜，絕無海鮮"},
+                          {n: "清酒博物館", t: "景點", desc: "買長野地酒好去處"}
+                      ]
                     },
-                    { 
-                        time: "15:30 - 17:00", 
-                        title: "新幹線：上野 -> 長野", 
-                        type: "transport", 
-                        detail: "從鶯谷搭 JR 回上野站 (入閘後找新幹線月台)。\n北陸新幹線 Kagayaki (光輝號)。車程約 90 分鐘。", 
-                        cost: "¥8,000" 
-                    },
-                    { 
-                        time: "17:15 - 18:00", 
-                        title: "巴士：長野 -> 大町溫泉鄉", 
-                        type: "transport", 
-                        detail: "在長野站東口搭 Alpico 特急巴士。\n⚠️ 注意：必須查清楚尾班車時間 (通常 19:00 左右)，千萬不要在東京玩過頭！",
-                        cost: "¥2,600"
-                    },
-                    { time: "19:00", title: "入住大町溫泉鄉", type: "hotel", detail: "享受溫泉，早睡準備明天登山。" }
-                ],
-                planB: null
-            },
-            {
-                id: 3,
-                date: "2026-04-17",
-                displayDate: "4/17 (五)",
-                title: "立山黑部・雪之大谷",
-                city: "立山 (Alpine Route)",
-                lat: 36.5833, lon: 137.6,
-                note: "無行李負擔",
-                planA: [
-                    { 
-                        time: "07:30", 
-                        title: "巴士前往扇澤站", 
-                        type: "transport", 
-                        detail: "穿越路線起點。",
-                    },
-                    { 
-                        time: "08:30 - 15:30", 
-                        title: "穿越立山黑部", 
-                        type: "transport", 
-                        detail: "扇澤 -> 黑部水壩 -> 室堂 -> 美女平 -> 立山站。\n利用 6 種交通工具翻山越嶺。因為沒帶行李，可以輕鬆上下樓梯拍照。",
-                        highlight: true,
-                        cost: "套票"
-                    },
-                    { time: "10:30 - 12:30", title: "室堂・雪之大谷", type: "spot", detail: "漫步於 20 米高的雪壁之間。", highlight: true },
-                    { 
-                        time: "16:00 - 17:00", 
-                        title: "富山地方鐵道", 
-                        type: "transport", 
-                        detail: "立山站 -> 電鐵富山站。",
-                    },
-                     { 
-                        time: "17:30 - 18:00", 
-                        title: "新幹線：富山 -> 金澤", 
-                        type: "transport", 
-                        detail: "北陸新幹線，約 23 分鐘即達。",
-                        cost: "¥2,860"
-                    },
-                    { time: "18:30", title: "入住東横INN金沢兼六園香林坊", type: "hotel", detail: "🎉 驚喜：你的大行李已經在飯店櫃檯等你了！\n位置極佳，就在兼六園旁，明早可以輕鬆散步過去。", highlight: true }
-                ],
+                    { time: "18:30", title: "入住織花：懷石料理", type: "hotel", detail: "享受溫泉與信州肉料理晚餐。早睡準備明日 07:00 登山。" }
+                ], 
                 planB: [
-                    { time: "09:00", title: "松本城 (Plan B)", type: "spot", detail: "☔ 若山區天氣惡劣停駛，改去松本城，然後直接去名古屋。" }
+                    { time: "09:00 - 15:00", title: "東京 Shopping 方案", type: "shop", detail: "如果您要留到下午 3 點，請注意 Plan B 的極限轉車風險。" },
+                    { time: "15:30 - 17:03", title: "新幹線往長野", type: "transport", detail: "上野 ➔ 長野。" },
+                    { time: "17:03 - 17:11", title: "🏃 極限轉乘 (8分鐘)", type: "alert", detail: "🚨 警告：需在 8 分鐘內出新幹線閘口並衝進 JR 閘口找「特急信濃號」月台！", highlight: true },
+                    { time: "17:11 - 19:25", title: "轉乘 JR 兜大圈入大町", type: "transport", detail: "長野 ➔ 松本 ➔ 信濃大町 ➔ 的士 ➔ 織花。" }
                 ]
             },
             {
-                id: 4,
-                date: "2026-04-18",
-                displayDate: "4/18 (六)",
-                title: "金澤小京都",
-                city: "金澤 (Kanazawa)",
-                lat: 36.5613, lon: 136.6562,
+                id: 3, date: "2026-04-17", displayDate: "4/17 (五)", title: "穿越雪之大谷", city: "立山 (Alpine)", lat: 36.5833, lon: 137.6, note: "開山第二日",
                 planA: [
-                    { time: "09:00 - 11:00", title: "兼六園", type: "spot", detail: "飯店步行即達。利用早晨人少時段賞景。", highlight: true },
-                    { time: "11:00 - 13:00", title: "近江町市場", type: "food", detail: "午餐：豪華海鮮丼 (Ikiiki亭/山散步)。" },
-                    { time: "14:00 - 17:00", title: "21世紀美術館 / 東茶屋街", type: "spot", detail: "可以去美術館打卡泳池，或去東茶屋街喝下午茶。" },
-                    { time: "18:00", title: "返回飯店取行李", type: "luggage", detail: "回香林坊東橫INN取回大行李，準備移動。" },
-                    { time: "18:30 - 19:00", title: "移動：香林坊 -> 金澤站", type: "transport", detail: "搭乘巴士或計程車前往金澤車站。" },
-                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in 放行李。就在車站旁，明早搭巴士超方便！", highlight: true },
-                    { time: "20:00", title: "晚餐：金澤百番街", type: "food", detail: "在車站內的「金澤百番街」享用晚餐 (如：黑百合關東煮)。" }
-                ],
-                planB: [
-                    { time: "10:00", title: "加賀溫泉鄉", type: "spot", detail: "雨天備案：溫泉一日遊。" }
-                ]
+                    { time: "07:30", title: "巴士前往扇澤站", type: "transport", detail: "從大町出發前往穿越路線起點。建議飯店早餐後即出發。" },
+                    { time: "08:30 - 15:30", title: "阿爾卑斯路線 (全程)", type: "transport", detail: "扇澤 ➔ 黑部水壩 ➔ 室堂 ➔ 美女平 ➔ 立山站。\n各點轉車由工作人員導引，人流大時需排隊。", cost: "套票" },
+                    { time: "10:30 - 12:30", title: "室堂・雪之大谷", type: "spot", detail: "海拔 2450m。漫步 20 米高雪壁。記得帶墨鏡防雪盲。", highlight: true },
+                    { time: "13:00", title: "山頂午餐 (無海鮮)", type: "food",
+                      recs: [
+                          {n: "室堂餐廳", t: "黑部豚肉拉麵", desc: "海拔最高拉麵店"},
+                          {n: "扇澤 Rest House", t: "黑部水壩咖哩", desc: "造型特色，無海鮮成分"}
+                      ]
+                    },
+                    { time: "17:30 - 18:00", title: "新幹線往金澤", type: "transport", detail: "富山 ➔ 金澤。約 20 分鐘。", cost: "¥2,860" },
+                    { time: "18:30", title: "入住東横INN金沢兼六園香林坊", type: "hotel", detail: "🎉 領取大行李！飯店就在香林坊商圈，晚餐選擇極多。" }
+                ], planB: null
             },
             {
-                id: 5,
-                date: "2026-04-19",
-                displayDate: "4/19 (日)",
-                title: "飛驒古川祭",
-                city: "高山/古川",
-                lat: 36.1408, lon: 137.2513,
-                note: "祭典重頭戲！",
+                id: 4, date: "2026-04-18", displayDate: "4/18 (六)", title: "金澤賞櫻與小京都", city: "金澤 (Kanazawa)", lat: 36.5613, lon: 136.6562,
                 planA: [
-                    { 
-                        time: "07:30", 
-                        title: "【極重要：寄行李去名古屋】", 
-                        type: "luggage", 
-                        detail: "高山祭期間，車站 Locker 絕對爆滿！\n請在金澤飯店 Check-out 時，直接將大喼寄往明晚入住的【東横INN名古屋栄】。\n只需背背包 (1晚衣物) 輕裝去高山，這決定會救了你的腰！" 
+                    { time: "09:00 - 11:30", title: "兼六園 & 金澤城公園 🌸", type: "spot", detail: "從飯店步行 5 分鐘即達。4月中旬極高機率櫻吹雪。", highlight: true },
+                    { time: "11:45 - 13:00", title: "近江町市場午餐 (肉食)", type: "food", detail: "市場除了海鮮，能登牛也極出名！", 
+                      recs: [
+                          {n: "能登牛 壽司/串燒", t: "A5和牛", desc: "現場炙燒，入口即化"},
+                          {n: "金澤冠軍咖哩", t: "黑咖哩豬排", desc: "在地濃厚黑咖哩"}
+                      ]
                     },
-                    { 
-                        time: "08:10 - 10:25", 
-                        title: "濃飛巴士：金澤 -> 高山", 
-                        type: "transport", 
-                        detail: "【需預約】風景優美的路線。一身輕便上車，不用擔心行李艙滿。", 
-                        cost: "¥3,600" 
-                    },
-                    { time: "11:00 - 13:00", title: "高山老街", type: "spot", detail: "抵達後不用找 Locker，直接去三町通吃飛驒牛壽司，感受古街氛圍。", highlight: true },
-                    { 
-                        time: "13:40 - 14:00", 
-                        title: "JR：高山 -> 飛驒古川", 
-                        type: "transport", 
-                        detail: "前往《你的名字》聖地，準備參加祭典。", 
-                    },
-                    { time: "14:00 - 17:00", title: "聖地巡禮 & 祭典氛圍", type: "spot", detail: "古川站天橋、氣多若宮神社、白壁土藏街。欣賞街道上的「屋台」。", highlight: true },
-                    { time: "17:30", title: "祭典晚餐", type: "food", detail: "體驗古川祭典路邊攤 (Yatai) 或當地餐廳。" },
-                    { 
-                        time: "19:00 - 21:00", 
-                        title: "🏮 古川祭：起太鼓", 
-                        type: "spot", 
-                        detail: "觀看赤膊男兒抬大鼓遊行，氣氛極度高漲！\n⚠️ 注意保暖：夜晚只有幾度，要穿厚外套。", 
-                        highlight: true 
-                    },
-                    { 
-                        time: "21:30", 
-                        title: "返回高山", 
-                        type: "transport", 
-                        detail: "搭 JR 臨時列車返高山 -> 入住高山飯店 (輕裝 Check-in)。" 
-                    }
-                ],
-                planB: null
+                    { time: "18:00 - 19:00", title: "戰術移動 (換飯店)", type: "task", detail: "取行李搭公車移防至【金澤站東口】住宿，為明早搭巴士做準備。" },
+                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in。晚餐就在車站「金澤百番街」吃拉麵或關東煮。", highlight: true }
+                ], planB: null
             },
             {
-                id: 6,
-                date: "2026-04-20",
-                displayDate: "4/20 (一)",
-                title: "名古屋最後衝刺",
-                city: "名古屋 (Nagoya)",
-                lat: 35.1815, lon: 136.9066,
+                id: 5, date: "2026-04-19", displayDate: "4/19 (日)", title: "高山賞櫻 & 古川祭", city: "高山/古川", lat: 36.1408, lon: 137.2513, note: "古川祭正日",
                 planA: [
-                    { time: "08:00 - 09:30", title: "宮川朝市", type: "spot", detail: "買蘋果、味噌，體驗當地生活。" },
-                    { 
-                        time: "10:30 - 13:10", 
-                        title: "特急 Hida -> 名古屋", 
-                        type: "transport", 
-                        detail: "JR Hida (飛驒號) Wide View。車程約 2.5 小時。因為沒大行李，搭車超輕鬆！", 
-                        cost: "¥6,000" 
+                    { time: "08:10 - 10:25", title: "濃飛巴士往高山", type: "transport", detail: "【需預約】帶著大喼搭巴士。1 號月台候車。", cost: "¥3,600" },
+                    { time: "10:30", title: "酒店放低大喼", type: "task", detail: "抵達高山後，立刻過對面馬路前往 Residence Hotel 放行李，只需行 2 分鐘！", address: "岐阜県高山市花里町6丁目105" },
+                    { time: "11:00 - 13:00", title: "高山老街賞櫻 🌸", type: "food", detail: "中橋與宮川河畔櫻花絕景。", highlight: true,
+                      recs: [
+                          {n: "Kotte牛", t: "飛驒牛握壽司", desc: "必排隊名店"},
+                          {n: "味藏天國", t: "飛驒牛燒肉", desc: "高山最強和牛"}
+                      ]
                     },
-                    { time: "14:00 - 16:30", title: "大須商店街", type: "shop", detail: "雜貨、古著、電器。適合挖寶。" },
-                    { time: "17:00 - 18:30", title: "榮商圈 / 綠洲21", type: "spot", detail: "上綠洲21 睇夜景，去 HARBS 吃水果千層蛋糕。", highlight: true },
-                    { time: "19:30", title: "晚餐：名古屋名物", type: "food", detail: "矢場味噌豬排 或 世界之山將雞翼。" },
-                    { time: "21:00", title: "入住東横INN名古屋栄", type: "hotel", detail: "🎉 Check-in 時領取昨天從金澤寄來的行李。\n位於榮商圈，交通方便。好好休息，明天是最後一天。", highlight: false }
-                ],
-                planB: [
-                    { time: "14:00", title: "豐田產業技術紀念館", type: "spot", detail: "雨天備案。" }
-                ]
+                    { time: "13:40 - 14:00", title: "JR 往飛驒古川", type: "transport", detail: "JR 就在飯店旁邊，非常方便。" },
+                    { time: "19:00 - 21:00", title: "🏮 古川祭：起太鼓", type: "festival", detail: "超級熱血！注意：夜晚溫度僅個位數，務必穿羽絨！", highlight: true },
+                    { time: "21:30", title: "返回高山酒店", type: "hotel", detail: "搭乘 JR 臨時列車回高山。返酒店正式 Check-in 休息。" }
+                ], planB: null
             },
             {
-                id: 7,
-                date: "2026-04-21",
-                displayDate: "4/21 (二)",
-                title: "熱田神宮 & 返港",
-                city: "名古屋 (Nagoya)",
-                lat: 35.1815, lon: 136.9066,
+                id: 6, date: "2026-04-20", displayDate: "4/20 (一)", title: "名古屋購物", city: "名古屋 (Nagoya)", lat: 35.1815, lon: 136.9066,
                 planA: [
-                    { 
-                        time: "10:30", 
-                        title: "【必勝攻略】", 
-                        type: "food", 
-                        detail: "Check-out 東横INN名古屋栄 (可先寄放行李或帶去名古屋站 Locker)。\n先去蓬萊軒登記拿號碼牌，然後去逛神宮。",
-                        highlight: true 
+                    { time: "08:00 - 09:30", title: "宮川朝市", type: "spot", detail: "買蘋果做早餐。" },
+                    { time: "10:30 - 13:10", title: "特急 Hida 往名古屋", type: "transport", detail: "JR Hida (飛驒號)。劃位建議選右側。", cost: "¥6,000" },
+                    { time: "14:00 - 18:30", title: "大須 & 榮商圈", type: "shop", detail: "名古屋最後衝刺。" },
+                    { time: "19:30", title: "名古屋名物晚餐", type: "food", detail: "矢場豚味噌豬排 或 世界之山將雞翼。", highlight: true },
+                    { time: "21:00", title: "入住東横INN名古屋栄", type: "hotel", detail: "整理戰利品。飯店在榮商圈核心。" }
+                ], planB: null
+            },
+            {
+                id: 7, date: "2026-04-21", displayDate: "4/21 (二)", title: "熱田神宮與返港", city: "名古屋 (Nagoya)", lat: 35.1815, lon: 136.9066,
+                planA: [
+                    { time: "10:00 - 11:30", title: "熱田神宮", type: "spot", detail: "參拜神劍。" },
+                    { time: "12:00 - 13:30", title: "交趾雞午餐 (地雞)", type: "food", detail: "用雞肉三吃代替鰻魚飯。", highlight: true,
+                      recs: [
+                          {n: "鳥開總本家", t: "交趾雞三吃", desc: "名古屋地雞，無海鮮過敏"},
+                          {n: "山本屋本店", t: "味噌燉烏冬", desc: "超濃郁紅味噌"}
+                      ]
                     },
-                    { time: "11:00 - 12:00", title: "熱田神宮", type: "spot", detail: "參拜神劍，享受森林浴。" },
-                    { time: "12:30 - 14:00", title: "蓬萊軒鰻魚飯", type: "food", detail: "必吃櫃塗飯 (Hitsumabushi) 三吃。" },
-                    { time: "14:30 - 16:00", title: "最後補貨", type: "shop", detail: "名古屋站周邊 / 千里馬藥局。" },
-                    { 
-                        time: "17:00 - 17:30", 
-                        title: "名鐵：名古屋 -> 機場", 
-                        type: "transport", 
-                        detail: "μ-SKY (全車指定席)，約 28 分鐘直達。", 
-                        cost: "¥1,250" 
-                    },
-                    { time: "21:00", title: "起飛返港 (HKG)", type: "flight", detail: "CX/UO Flight。" }
-                ],
-                planB: null
+                    { time: "16:45", title: "🚶 轉車指引：名鐵站", type: "task", detail: "從名古屋站步行至「名鐵 (Meitetsu)」車站約需 10 分鐘，別跟著 JR 走。", highlight: true },
+                    { time: "17:00 - 17:30", title: "名鐵 μ-SKY 往機場", type: "transport", detail: "全車指定席，28分鐘直達機場。", cost: "¥1,250" },
+                    { time: "21:00", title: "起飛返港 (HKG)", type: "flight", detail: "完美結束！" }
+                ], planB: null
             }
         ];
 
-        // --- Components ---
-
+        // --- UI Components ---
         const IconWrapper = ({ name, className = "w-5 h-5" }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
 
+        const CopyButton = ({ text, onCopy }) => (
+            <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(text).then(onCopy); }}
+                className="ml-2 inline-flex items-center gap-1 bg-zinc-800 hover:bg-sky-900/50 text-sky-400 px-2 py-1 rounded text-[10px] font-bold transition-colors border border-zinc-700"
+            >
+                <IconWrapper name="copy" className="w-3 h-3" /> 複製
+            </button>
+        );
+
         const WeatherWidget = ({ lat, lon, date }) => {
             const [weather, setWeather] = useState(null);
-            
             useEffect(() => {
                 const fetchWeather = async () => {
                     const targetYear = 2025;
                     const [y, m, d] = date.split('-');
-                    const historyDate = `${targetYear}-${m}-${d}`;
-                    const url = `${CONFIG.weatherApiBase}?latitude=${lat}&longitude=${lon}&start_date=${historyDate}&end_date=${historyDate}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`;
-
                     try {
-                        const res = await fetch(url);
+                        const res = await fetch(`${CONFIG.weatherApiBase}?latitude=${lat}&longitude=${lon}&start_date=${targetYear}-${m}-${d}&end_date=${targetYear}-${m}-${d}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`);
                         const data = await res.json();
-                        if (data.daily) {
-                            setWeather({
-                                code: data.daily.weather_code[0],
-                                max: data.daily.temperature_2m_max[0],
-                                min: data.daily.temperature_2m_min[0]
-                            });
-                        }
+                        if (data.daily) setWeather({ code: data.daily.weather_code[0], max: data.daily.temperature_2m_max[0], min: data.daily.temperature_2m_min[0] });
                     } catch (e) { console.error(e); }
                 };
                 if (lat && lon) fetchWeather();
             }, [lat, lon, date]);
-
-            if (!weather) return <div className="text-xs text-slate-500 animate-pulse">載入中...</div>;
-
-            let icon = "cloud";
-            let text = "多雲";
-            if (weather.code <= 3) { icon = "sun"; text = "晴時多雲"; }
-            else if (weather.code <= 67) { icon = "cloud-rain"; text = "有雨"; }
-            else if (weather.code <= 77) { icon = "snowflake"; text = "降雪"; }
-
+            if (!weather) return <div className="text-xs text-zinc-500 animate-pulse">...</div>;
             return (
-                <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-slate-200 border border-slate-700">
-                    <IconWrapper name={icon} className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-sm">{weather.max}°</span>
-                    <span className="text-xs text-slate-400">/ {weather.min}°</span>
+                <div className="flex items-center gap-1.5 bg-zinc-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-zinc-800 shadow-sm">
+                    <IconWrapper name={weather.code <= 3 ? "sun" : "cloud"} className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="font-bold text-xs text-zinc-200">{weather.max}°</span>
                 </div>
             );
         };
 
-        // --- Views ---
-
         const ItineraryView = () => {
             const [currentDayIdx, setCurrentDayIdx] = useState(0);
             const [activePlans, setActivePlans] = useState({});
-
+            const [toast, setToast] = useState('');
             const day = ITINERARY_DATA[currentDayIdx];
             const isPlanB = activePlans[day.id] === 'B';
             const currentPlan = isPlanB ? (day.planB || day.planA) : day.planA;
-
-            const togglePlan = () => {
-                setActivePlans(prev => ({
-                    ...prev,
-                    [day.id]: prev[day.id] === 'B' ? 'A' : 'B'
-                }));
-            };
-
-            const nextDay = () => { if(currentDayIdx < ITINERARY_DATA.length - 1) setCurrentDayIdx(c => c + 1); };
-            const prevDay = () => { if(currentDayIdx > 0) setCurrentDayIdx(c => c - 1); };
+            const togglePlan = () => setActivePlans(prev => ({ ...prev, [day.id]: prev[day.id] === 'B' ? 'A' : 'B' }));
+            const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
+            
+            const handlePrevDay = () => { if (currentDayIdx > 0) setCurrentDayIdx(currentDayIdx - 1); };
+            const handleNextDay = () => { if (currentDayIdx < ITINERARY_DATA.length - 1) setCurrentDayIdx(currentDayIdx + 1); };
 
             return (
                 <div className="h-full flex flex-col pb-20">
-                    {/* Header */}
-                    <div className="bg-slate-950 sticky top-0 z-20 border-b border-slate-800">
-                        <div className="px-4 py-3">
-                            <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                                <IconWrapper name="mountain-snow" className="text-primary w-5 h-5" />
-                                2026 立山黑部 & 古川祭
-                            </h1>
+                    {toast && <div className="toast">{toast}</div>}
+                    
+                    <div className="bg-black/80 backdrop-blur-md sticky top-0 z-20 border-b border-zinc-800">
+                        <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+                            <IconWrapper name="map" className="text-sky-400 w-4 h-4" />
+                            <h1 className="text-sm font-bold text-zinc-100 tracking-wide">立山黑部 智能行軍圖 V59</h1>
                         </div>
-                        
-                        {/* Day Tabs */}
                         <div className="flex overflow-x-auto no-scrollbar gap-2 px-4 pb-3 snap-x">
                             {ITINERARY_DATA.map((d, idx) => (
-                                <button
-                                    key={d.id}
-                                    onClick={() => setCurrentDayIdx(idx)}
-                                    className={`flex-shrink-0 px-4 py-2 rounded-full flex flex-col items-center min-w-[64px] transition-all snap-center border ${
-                                        currentDayIdx === idx 
-                                        ? 'bg-primary text-slate-950 border-primary shadow-glow font-bold' 
-                                        : 'bg-slate-900 border-slate-800 text-slate-500'
-                                    }`}
-                                >
-                                    <span className={`text-[10px] font-bold tracking-wider ${currentDayIdx === idx ? 'opacity-100' : 'opacity-60'}`}>DAY {idx + 1}</span>
+                                <button key={d.id} onClick={() => setCurrentDayIdx(idx)}
+                                    className={`flex-shrink-0 px-4 py-1.5 rounded-lg flex flex-col items-center min-w-[60px] transition-all snap-center border ${currentDayIdx === idx ? 'bg-sky-500/10 text-sky-400 border-sky-500/50 shadow-glow-primary' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider">Day {idx + 1}</span>
                                     <span className="text-sm font-bold">{d.date.split('-')[2]}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Content */}
-                    <div key={day.id} className="flex-1 px-4 py-6 overflow-y-auto pb-24 animate-slide-up">
-                        
-                        {/* Day Header */}
+                    <div key={day.id} className="flex-1 px-4 py-5 overflow-y-auto pb-24 animate-card">
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-bold text-primary bg-sky-950/50 px-2 py-0.5 rounded-full border border-sky-900">
-                                        {day.city}
-                                    </span>
-                                    {day.note && <span className="text-xs font-bold text-accent bg-amber-950/30 px-2 py-0.5 rounded-full border border-amber-900/50">{day.note}</span>}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-bold text-zinc-900 bg-sky-400 px-2 py-0.5 rounded uppercase tracking-wider">{day.city}</span>
+                                    {day.note && <span className="text-[10px] font-bold text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded bg-amber-400/10">{day.note}</span>}
                                 </div>
-                                <h2 className="text-2xl font-bold text-white">{day.title}</h2>
-                                <p className="text-sm text-slate-400 mt-0.5">{day.displayDate}</p>
+                                <h2 className="text-2xl font-bold text-zinc-50">{day.title}</h2>
+                                <p className="text-xs text-zinc-400 mt-1 font-mono">{day.date.replace(/-/g, '/')} {day.displayDate.split(' ')[1]}</p>
                             </div>
                             <WeatherWidget lat={day.lat} lon={day.lon} date={day.date} />
                         </div>
 
-                        {/* Plan B Toggle */}
                         {day.planB && (
-                            <button 
-                                onClick={togglePlan}
-                                className={`w-full mb-6 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all border ${
-                                    isPlanB 
-                                    ? 'bg-amber-900/30 text-amber-400 border-amber-800' 
-                                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
-                                }`}
-                            >
-                                <IconWrapper name="refresh-cw" className="w-3.5 h-3.5" />
+                            <button onClick={togglePlan} className={`w-full mb-6 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all border ${isPlanB ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-glow-accent' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800'}`}>
+                                <IconWrapper name="refresh-cw" className="w-4 h-4" />
                                 {isPlanB ? '顯示中：雨天備案' : '切換備案 (Plan B)'}
                             </button>
                         )}
 
-                        {/* Timeline */}
-                        <div className="space-y-4 relative pl-2">
-                            {/* Line */}
-                            <div className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-slate-800 rounded-full"></div>
-
+                        <div className="space-y-4 relative pl-[14px]">
+                            <div className="absolute left-[27px] top-4 bottom-4 w-[2px] bg-zinc-800 rounded-full"></div>
                             {currentPlan.map((item, i) => (
-                                <div key={i} className="relative pl-10">
-                                    {/* Icon */}
-                                    <div className={`absolute left-0 top-0 w-10 h-10 rounded-full flex items-center justify-center z-10 border-4 border-[#020617] ${
-                                        item.type === 'luggage' ? 'bg-primary text-slate-950' :
-                                        item.title.includes('起太鼓') ? 'bg-accent text-slate-950' :
-                                        item.highlight ? 'bg-primary text-slate-950' : 'bg-slate-800 text-slate-400'
+                                <div key={i} className="relative pl-8">
+                                    <div className={`absolute left-[-14px] top-0 w-8 h-8 rounded-full flex items-center justify-center z-10 border-[3px] border-[#09090b] ${
+                                        item.type === 'task' ? 'bg-sky-500 text-zinc-950' : 
+                                        item.type === 'alert' ? 'bg-red-500 text-white' : 
+                                        item.type === 'food' ? 'bg-orange-500 text-white' : 
+                                        item.type === 'festival' ? 'bg-amber-400 text-zinc-950' : 
+                                        item.highlight ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-400'
                                     }`}>
-                                        <IconWrapper name={
-                                            item.type === 'luggage' ? 'package' :
-                                            item.title.includes('起太鼓') ? 'flame' :
-                                            item.type === 'transport' ? 'train-front' : 
-                                            item.type === 'food' ? 'utensils' : 
-                                            item.type === 'shop' ? 'shopping-bag' : 
-                                            item.type === 'hotel' ? 'bed' : 
-                                            item.type === 'flight' ? 'plane' : 'map-pin'
-                                        } className="w-4 h-4" />
+                                        <IconWrapper name={item.type === 'food' ? 'utensils' : item.type === 'transport' ? 'train-front' : item.type === 'festival' ? 'flame' : item.type === 'alert' ? 'triangle-alert' : 'map-pin'} className="w-3.5 h-3.5" />
                                     </div>
-
-                                    {/* Card */}
-                                    <div className={`app-card p-4 ${item.type === 'luggage' ? 'luggage-box' : item.title.includes('起太鼓') ? 'festival-box' : ''}`}>
-                                        <div className="flex justify-between items-start mb-1">
-                                            {item.type !== 'luggage' && <span className="text-xs font-bold text-slate-500 font-mono">{item.time.split(' - ')[0]}</span>}
-                                            {item.type === 'luggage' && <span className="text-xs font-bold text-primary">行李對策</span>}
-                                            
-                                            {/* ENLARGED MAP BUTTON */}
-                                            {item.type !== 'luggage' && item.type !== 'flight' && (
-                                                <a 
-                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title + ' ' + day.city)}`} 
-                                                    target="_blank" 
-                                                    className="w-12 h-12 flex items-center justify-center bg-slate-800 text-primary rounded-xl border border-slate-700 hover:bg-primary hover:text-slate-950 transition-all shadow-lg shadow-black/20"
-                                                >
-                                                    <IconWrapper name="map" className="w-6 h-6" />
-                                                </a>
-                                            )}
+                                    <div className={`app-card p-4 ${item.type === 'task' ? 'task-box' : item.type === 'alert' ? 'alert-box' : item.type === 'food' ? 'food-box' : item.type === 'festival' ? 'festival-box' : ''}`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`text-[11px] font-bold font-mono px-1.5 py-0.5 rounded ${item.type === 'food' ? 'bg-orange-500/20 text-orange-400' : 'bg-zinc-800 text-zinc-400'}`}>{item.time.split(' - ')[0]}</span>
+                                            {item.type !== 'flight' && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title + ' ' + day.city)}`} target="_blank" className="bg-zinc-800 p-1.5 rounded-lg border border-zinc-700 text-sky-400"><IconWrapper name="map" className="w-4 h-4" /></a>}
                                         </div>
+                                        <h3 className={`text-base font-bold mb-1.5 ${item.type === 'food' ? 'text-orange-400' : item.type === 'festival' ? 'text-amber-400' : item.highlight ? 'text-sky-300' : 'text-zinc-100'}`}>{item.title}</h3>
+                                        <div className="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{item.detail}</div>
                                         
-                                        <h3 className={`text-base font-bold mb-1 ${item.title.includes('起太鼓') ? 'text-accent' : item.highlight ? 'text-primary' : 'text-slate-200'}`}>{item.title}</h3>
-                                        
-                                        {/* Content */}
-                                        <div className="text-sm text-slate-400 leading-relaxed whitespace-pre-line">
-                                            {item.detail}
-                                        </div>
-
-                                        {/* Cost Tag */}
-                                        {item.cost && (
-                                            <div className="mt-3 inline-flex items-center gap-1.5 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-emerald-400 border border-slate-700">
-                                                <IconWrapper name="banknote" className="w-3 h-3" />
-                                                {item.cost}
+                                        {item.recs && (
+                                            <div className="mt-3 space-y-2 border-t border-zinc-800 pt-3">
+                                                <div className="text-[10px] font-bold text-zinc-500 flex items-center gap-1 mb-1"><IconWrapper name="sparkles" className="w-3 h-3 text-orange-400" /> AI 推薦</div>
+                                                {item.recs.map((rec, rIdx) => (
+                                                    <div key={rIdx} className="bg-black/30 p-2 rounded-lg border border-zinc-800/50 flex justify-between items-center">
+                                                        <div><div className="font-bold text-xs text-zinc-200">{rec.n}</div><div className="text-[10px] text-zinc-500">{rec.t} · {rec.desc}</div></div>
+                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rec.n + ' ' + day.city)}`} target="_blank" className="text-zinc-600 hover:text-orange-400"><IconWrapper name="navigation" className="w-4 h-4" /></a>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
+                                        {item.address && <div className="mt-3 bg-black/40 p-2 rounded border border-zinc-800 flex justify-between items-center"><span className="text-xs text-zinc-500 font-mono truncate">{item.address}</span><CopyButton text={item.address} onCopy={() => showToast('地址已複製')} /></div>}
+                                        {item.cost && <div className="mt-2 inline-flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20"><IconWrapper name="banknote" className="w-3 h-3" /> {item.cost}</div>}
                                     </div>
                                 </div>
                             ))}
                         </div>
-
-                        {/* Nav */}
                         <div className="flex justify-between mt-8">
-                             <button onClick={prevDay} disabled={currentDayIdx===0} className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 disabled:opacity-30 disabled:border-transparent text-sm font-bold shadow-sm hover:bg-slate-800">
-                                ← 前一天
-                            </button>
-                            <button onClick={nextDay} disabled={currentDayIdx===ITINERARY_DATA.length-1} className="px-4 py-2 rounded-lg bg-primary text-slate-950 disabled:opacity-50 text-sm font-bold shadow-glow hover:bg-sky-300">
-                                下一天 →
-                            </button>
+                             <button onClick={handlePrevDay} disabled={currentDayIdx===0} className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 disabled:opacity-30 text-sm font-bold shadow-sm hover:bg-zinc-800">← 前一天</button>
+                             <button onClick={handleNextDay} disabled={currentDayIdx===ITINERARY_DATA.length-1} className="px-4 py-2 rounded-lg bg-sky-500 text-zinc-950 disabled:opacity-50 text-sm font-bold shadow-glow-primary hover:bg-sky-400">下一天 →</button>
                         </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const FoodieView = () => {
-            const [recommendations, setRecommendations] = useState({});
-            const [loading, setLoading] = useState(false);
-            
-            const fetchRecs = (dayId, city) => {
-                setLoading(dayId);
-                setTimeout(() => {
-                    const mock = {
-                        "東京": [{n: "AFURI 原宿", t: "柚子鹽拉麵"}, {n: "鳥貴族", t: "居酒屋"}, {n: "Harbs", t: "蛋糕"}],
-                        "長野": [{n: "草笛", t: "信州蕎麥麵"}, {n: "明治亭", t: "醬汁豬排丼"}, {n: "八幡屋礒五郎", t: "七味粉甜點"}],
-                        "立山": [{n: "室堂餐廳", t: "白蝦丼"}, {n: "扇澤 Rest House", t: "黑部水壩咖哩"}],
-                        "金澤": [{n: "Mori Mori 壽司", t: "迴轉壽司"}, {n: "箔一", t: "金箔冰淇淋"}, {n: "麵屋大河", t: "味噌拉麵"}],
-                        "高山": [{n: "味藏天國", t: "飛驒牛燒肉"}, {n: "坂口屋", t: "飛驒牛壽司"}, {n: "Le Midi", t: "南瓜布丁"}],
-                        "名古屋": [{n: "熱田蓬萊軒", t: "鰻魚飯三吃"}, {n: "矢場豚", t: "味噌豬排"}, {n: "世界之山將", t: "手羽先"}]
-                    };
-                    setRecommendations(prev => ({...prev, [dayId]: mock[city.split(' ')[0]] || mock["東京"]}));
-                    setLoading(false);
-                }, 800);
-            };
-
-            return (
-                <div className="h-full overflow-y-auto pb-24 px-4 py-6">
-                    <header className="mb-6">
-                        <h2 className="text-2xl font-bold text-white">尋味之旅</h2>
-                        <p className="text-sm text-slate-500">AI 智能推薦當日周邊美食</p>
-                    </header>
-                    <div className="space-y-4">
-                        {ITINERARY_DATA.map((day) => (
-                            <div key={day.id} className="app-card p-5">
-                                <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-800">
-                                    <div>
-                                        <div className="text-[10px] font-bold tracking-widest text-primary uppercase mb-1">Day {day.id}</div>
-                                        <h3 className="font-bold text-slate-200 flex items-center gap-2">
-                                            {day.city.split(' ')[0]}
-                                        </h3>
-                                    </div>
-                                    {!recommendations[day.id] && (
-                                        <button onClick={() => fetchRecs(day.id, day.city)} disabled={loading===day.id} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full text-slate-300 transition-colors flex items-center gap-2 font-bold border border-slate-700">
-                                            {loading===day.id ? <IconWrapper name="loader" className="w-3 h-3 animate-spin"/> : <IconWrapper name="sparkles" className="w-3 h-3 text-accent"/>}
-                                            推薦
-                                        </button>
-                                    )}
-                                </div>
-                                
-                                {recommendations[day.id] ? (
-                                    <div className="grid gap-3">
-                                        {recommendations[day.id].map((rec, i) => (
-                                            <div key={i} className="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 text-xs font-bold">
-                                                        {i+1}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-sm text-slate-200">{rec.n}</div>
-                                                        <div className="text-xs text-slate-500">{rec.t}</div>
-                                                    </div>
-                                                </div>
-                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rec.n + ' ' + day.city)}`} target="_blank" className="text-primary hover:scale-110 transition-transform">
-                                                    <IconWrapper name="map-pin" className="w-4 h-4" />
-                                                </a>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="py-4 flex flex-col items-center justify-center text-slate-600 gap-1 border-2 border-dashed border-slate-800 rounded-xl">
-                                        <IconWrapper name="utensils-crossed" className="w-5 h-5" />
-                                        <span className="text-xs">點擊生成推薦</span>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
                     </div>
                 </div>
             );
@@ -634,50 +385,34 @@
 
         const CouponView = () => {
             const [filter, setFilter] = useState("ALL");
+            const [selectedCoupon, setSelectedCoupon] = useState(null);
             return (
                 <div className="h-full overflow-y-auto pb-24 px-4 py-6">
-                     <header className="mb-6">
-                        <h2 className="text-2xl font-bold text-white mb-4">優惠券</h2>
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                            {['ALL', '藥妝', '電器', '百貨', '雜貨'].map(tag => (
-                                <button key={tag} onClick={() => setFilter(tag)} 
-                                    className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                                        filter === tag 
-                                        ? 'bg-primary text-slate-950 border-primary' 
-                                        : 'bg-slate-900 text-slate-400 border-slate-800'
-                                    }`}>
-                                    {tag}
-                                </button>
+                     <header className="mb-6"><h2 className="text-2xl font-bold text-zinc-50 mb-4 px-2">優惠券</h2>
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar px-2">
+                            {['ALL', '藥妝', '百貨', '電器', '免稅店', '雜貨'].map(tag => (
+                                <button key={tag} onClick={() => setFilter(tag)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${filter === tag ? 'bg-sky-500 text-zinc-950 border-sky-400' : 'bg-zinc-900 text-zinc-400 border-zinc-800'}`}>{tag}</button>
                             ))}
                         </div>
                     </header>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 px-2">
                         {COUPONS_DATA.filter(c => filter === 'ALL' || c.tags.includes(filter)).map((coupon, idx) => (
-                            <div key={idx} className="bg-slate-900 rounded-2xl overflow-hidden shadow-sm border border-slate-800 flex flex-col h-56">
-                                <div className="h-28 p-4 flex items-center justify-center bg-white relative">
-                                    <img src={coupon.final_url} className="max-w-full max-h-full object-contain" />
-                                    <span className="absolute top-0 left-0 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-br-lg">HOT</span>
-                                </div>
-                                <div className="p-3 flex-1 flex flex-col justify-between">
-                                    <div>
-                                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">{coupon.tags[0]}</div>
-                                        <h3 className="font-bold text-slate-200 text-sm leading-tight line-clamp-2">{coupon.name}</h3>
-                                    </div>
-                                    <div>
-                                        <div className="text-primary font-bold text-xs bg-sky-950/50 px-1.5 py-0.5 rounded w-fit mb-2 border border-sky-900">
-                                            {coupon.discount}
-                                        </div>
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-[9px] text-slate-500">~{coupon.expiry}</span>
-                                            <a href={coupon.final_url} target="_blank" className="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center border border-slate-700">
-                                                <IconWrapper name="arrow-up-right" className="w-3 h-3" />
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div key={idx} onClick={() => setSelectedCoupon(coupon)} className="app-card flex flex-col p-4 cursor-pointer group h-[110px] justify-between">
+                                <div><div className="text-[9px] font-bold text-sky-400 bg-sky-900/30 px-1.5 py-0.5 rounded uppercase w-fit mb-1">{coupon.tags[0]}</div>
+                                <h3 className="font-bold text-zinc-100 text-base leading-tight truncate">{coupon.name}</h3></div>
+                                <div className="text-emerald-400 font-bold text-xs mt-1 truncate">{coupon.discount}</div>
                             </div>
                         ))}
                     </div>
+                    {selectedCoupon && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedCoupon(null)}>
+                            <div className="bg-zinc-900 rounded-2xl w-full max-w-sm overflow-hidden border border-zinc-700" onClick={e => e.stopPropagation()}>
+                                <div className="p-4 border-b border-zinc-800 flex justify-between bg-zinc-950"><h3 className="font-bold text-lg">{selectedCoupon.name}</h3><button onClick={() => setSelectedCoupon(null)}><IconWrapper name="x" className="w-5 h-5" /></button></div>
+                                <div className="p-4 bg-white min-h-[200px] flex items-center justify-center"><img src={selectedCoupon.final_url} className="max-w-full h-auto object-contain max-h-[50vh]" /></div>
+                                <div className="p-5 flex flex-col items-center bg-zinc-950"><p className="text-emerald-400 font-bold text-xl mb-1">{selectedCoupon.discount}</p><p className="text-xs text-zinc-500 mb-5">期限：{selectedCoupon.expiry}</p><a href={selectedCoupon.final_url} target="_blank" className="w-full py-3 rounded-xl bg-sky-500 text-zinc-950 font-bold text-center">儲存圖片 / 開啟大圖</a></div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -685,22 +420,16 @@
         const App = () => {
             const [tab, setTab] = useState('itinerary');
             return (
-                <div className="h-[100dvh] flex flex-col bg-[#020617]">
+                <div className="h-[100dvh] flex flex-col bg-[#09090b]">
                     <div className="flex-1 overflow-hidden relative">
                         {tab === 'itinerary' && <ItineraryView />}
-                        {tab === 'foodie' && <FoodieView />}
                         {tab === 'coupons' && <CouponView />}
                     </div>
-
-                    <nav className="bg-slate-950 border-t border-slate-800 pb-safe z-50">
-                        <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
-                            {[
-                                { id: 'itinerary', icon: 'map', label: '行程' },
-                                { id: 'foodie', icon: 'utensils', label: '美食' },
-                                { id: 'coupons', icon: 'ticket', label: '優惠' }
-                            ].map(item => (
-                                <button key={item.id} onClick={() => setTab(item.id)} className={`flex flex-col items-center gap-1 w-16 transition-colors ${tab === item.id ? 'text-primary' : 'text-slate-600'}`}>
-                                    <IconWrapper name={item.icon} className={`w-6 h-6 ${tab === item.id ? 'fill-sky-900/40' : ''}`} />
+                    <nav className="bg-[#18181b]/90 backdrop-blur-lg border-t border-zinc-800 pb-safe z-50">
+                        <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
+                            {[{ id: 'itinerary', icon: 'map', label: '行軍圖' }, { id: 'coupons', icon: 'ticket', label: '優惠' }].map(item => (
+                                <button key={item.id} onClick={() => setTab(item.id)} className={`flex flex-col items-center gap-1 w-20 transition-all ${tab === item.id ? 'text-sky-400 scale-105' : 'text-zinc-500 hover:text-zinc-400'}`}>
+                                    <IconWrapper name={item.icon} className={`w-5 h-5 ${tab === item.id ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} />
                                     <span className="text-[10px] font-bold">{item.label}</span>
                                 </button>
                             ))}
@@ -709,9 +438,7 @@
                 </div>
             );
         };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
