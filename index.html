@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026 立山黑部 & 古川祭 | Pro 整合版 V59</title>
+    <title>2026 立山黑部 & 古川祭 | Pro 終極整合版</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -124,6 +124,7 @@
 
         const CONFIG = { weatherApiBase: "https://archive-api.open-meteo.com/v1/archive" };
 
+        // 最新優惠券 (加入大量免稅/百貨/運動)
         const COUPONS_DATA = [
             { "name": "Donki唐吉訶德", "discount": "滿額免稅，再折5%", "expiry": "無期限", "final_url": "https://japanportal.donki-global.com/coupon/?ptcd=0076003303", "tags": ["雜貨", "深夜"] },
             { "name": "Bic Camera", "discount": "滿額免稅，最高再折7%", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "藥妝"] },
@@ -131,25 +132,27 @@
             { "name": "愛電王Edion", "discount": "最高免稅+7%", "expiry": "2026/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/edion2025.jpg", "tags": ["電器"] },
             { "name": "成田免稅店", "discount": "95折優惠", "expiry": "2026/3/31", "final_url": "https://duty-free-japan.jp/narita/ta/content/coupon2833-30.html", "tags": ["免稅店", "機場"] },
             { "name": "SUNDRUG", "discount": "最高免稅+7%", "expiry": "無期限", "final_url": "https://www.funtime.com.tw/travelstore/coupon/sundrug%20_funtime.jpg", "tags": ["藥妝"] },
-            { "name": "名鐵百貨", "discount": "免稅+5%", "expiry": "2026/2/28", "final_url": "https://www.funtime.com.tw/travelstore/coupon/meitetsu_250516.png", "tags": ["百貨", "名古屋"] }
+            { "name": "名鐵百貨", "discount": "免稅+5%", "expiry": "2026/2/28", "final_url": "https://www.funtime.com.tw/travelstore/coupon/meitetsu_250516.png", "tags": ["百貨", "名古屋"] },
+            { "name": "Alpen", "discount": "免稅再折5%", "expiry": "2026/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/2026Alpen.png?ftfrom=blog-68172-20", "tags": ["運動"] },
+            { "name": "大丸松坂屋", "discount": "單筆滿3千日圓，享95折", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/daimaru_250820.pdf", "tags": ["百貨"] }
         ];
 
-        // V59 Integrated Buffer Times & Navigation Tips
+        // 終極無備案、防海鮮過敏、精確時間表行程
         const ITINERARY_DATA = [
             {
                 id: 1, date: "2026-04-15", displayDate: "4/15 (三)", title: "抵達東京", city: "東京 (Tokyo)", lat: 35.6895, lon: 139.6917,
-                planA: [
+                events: [
                     { time: "20:30", title: "抵達成田機場 (NRT)", type: "flight", detail: "入境預計 1hr。建議機上先填好 Visit Japan Web QR Code。" },
                     { time: "21:30 - 22:15", title: "Skyliner 往上野/鶯谷", type: "transport", detail: "Skyliner 至京成上野站 (45分)。\n轉乘 JR 山手線 至 鶯谷站 (1站)。", cost: "¥2,570" },
                     { time: "23:00", title: "入住東横INN鶯谷駅前", type: "hotel", detail: "Check-in 放行李。飯店就在鶯谷站北口步行 2 分鐘。", address: "東京都台東区根岸1-4-1" },
-                    { time: "⚠️ 睡前任務", title: "填寫宅急便運單", type: "task", detail: "向櫃檯索取運單，寄往【東横INN金沢兼六園香林坊】。\n指定抵達日：4/17 (後天)。" }
-                ], planB: null
+                    { time: "⚠️ 睡前任務", title: "填寫宅急便運單", type: "task", detail: "向櫃檯索取運單，寄往 Day 3 的【東横INN金沢兼六園香林坊】。\n指定抵達日：4/17 (後天)。" }
+                ]
             },
             {
                 id: 2, date: "2026-04-16", displayDate: "4/16 (四)", title: "東京 -> 長野大町", city: "長野 (Nagano)", lat: 36.6485, lon: 138.1942,
-                planA: [
+                events: [
                     { time: "08:30", title: "【寄行李】去金澤", type: "task", detail: "飯店櫃檯寄出大喼。今天起只背小背包 (1晚衣物)，準備山區行軍！", address: "石川県金沢市香林坊2-2-5" },
-                    { time: "09:00 - 12:00", title: "上野購物 & 早午餐", type: "food", detail: "鶯谷去上野只要 2 分鐘。阿美橫丁最後補貨零食。", highlight: true,
+                    { time: "09:00 - 12:00", title: "上野購物 & 早午餐 (無海鮮)", type: "food", detail: "鶯谷去上野只要 2 分鐘。阿美橫丁最後補貨零食。", highlight: true,
                       recs: [
                           {n: "牛かつ もと村", t: "炸牛排", desc: "自煎酥脆炸牛排，無海鮮"},
                           {n: "肉之大山", t: "和牛可樂餅", desc: "阿美橫丁排隊美食"}
@@ -165,84 +168,87 @@
                       ]
                     },
                     { time: "18:30", title: "入住織花：懷石料理", type: "hotel", detail: "享受溫泉與信州肉料理晚餐。早睡準備明日 07:00 登山。" }
-                ], 
-                planB: [
-                    { time: "09:00 - 15:00", title: "東京 Shopping 方案", type: "shop", detail: "如果您要留到下午 3 點，請注意 Plan B 的極限轉車風險。" },
-                    { time: "15:30 - 17:03", title: "新幹線往長野", type: "transport", detail: "上野 ➔ 長野。" },
-                    { time: "17:03 - 17:11", title: "🏃 極限轉乘 (8分鐘)", type: "alert", detail: "🚨 警告：需在 8 分鐘內出新幹線閘口並衝進 JR 閘口找「特急信濃號」月台！", highlight: true },
-                    { time: "17:11 - 19:25", title: "轉乘 JR 兜大圈入大町", type: "transport", detail: "長野 ➔ 松本 ➔ 信濃大町 ➔ 的士 ➔ 織花。" }
                 ]
             },
             {
-                id: 3, date: "2026-04-17", displayDate: "4/17 (五)", title: "穿越雪之大谷", city: "立山 (Alpine)", lat: 36.5833, lon: 137.6, note: "開山第二日",
-                planA: [
-                    { time: "07:30", title: "巴士前往扇澤站", type: "transport", detail: "從大町出發前往穿越路線起點。建議飯店早餐後即出發。" },
-                    { time: "08:30 - 15:30", title: "阿爾卑斯路線 (全程)", type: "transport", detail: "扇澤 ➔ 黑部水壩 ➔ 室堂 ➔ 美女平 ➔ 立山站。\n各點轉車由工作人員導引，人流大時需排隊。", cost: "套票" },
-                    { time: "10:30 - 12:30", title: "室堂・雪之大谷", type: "spot", detail: "海拔 2450m。漫步 20 米高雪壁。記得帶墨鏡防雪盲。", highlight: true },
-                    { time: "13:00", title: "山頂午餐 (無海鮮)", type: "food",
+                id: 3, date: "2026-04-17", displayDate: "4/17 (五)", title: "穿越雪之大谷", city: "立山 (Alpine)", lat: 36.5833, lon: 137.6, note: "無行李極度舒適",
+                events: [
+                    { time: "08:00 - 08:40", title: "路線巴士前往扇澤站", type: "transport", detail: "從信濃大町出發。車程約 40 分鐘，抵達後去窗口兌換實體票。" },
+                    { time: "09:30 - 11:45", title: "阿爾卑斯路線 (前半段)", type: "transport", detail: "【09:30】關電電氣巴士出發。\n【水壩】徒步觀光約 1 小時。\n【黑部平 & 大觀峰】轉乘纜車，各停留約 20-30 分鐘拍照。", cost: "套票" },
+                    { time: "12:00 - 14:00", title: "室堂・雪之大谷 & 午餐 (無海鮮)", type: "spot", detail: "海拔 2450m。漫步 20 米高雪壁 (約逛1小時)，然後喺室堂站食無海鮮午餐休息。", highlight: true,
                       recs: [
-                          {n: "室堂餐廳", t: "黑部豚肉拉麵", desc: "海拔最高拉麵店"},
-                          {n: "扇澤 Rest House", t: "黑部水壩咖哩", desc: "造型特色，無海鮮成分"}
+                          {n: "室堂餐廳", t: "黑部豚肉拉麵 / 山賊燒", desc: "海拔最高拉麵店，熱呼呼豚肉湯頭"}
                       ]
                     },
-                    { time: "17:30 - 18:00", title: "新幹線往金澤", type: "transport", detail: "富山 ➔ 金澤。約 20 分鐘。", cost: "¥2,860" },
-                    { time: "18:30", title: "入住東横INN金沢兼六園香林坊", type: "hotel", detail: "🎉 領取大行李！飯店就在香林坊商圈，晚餐選擇極多。" }
-                ], planB: null
+                    { time: "14:00 - 15:30", title: "下山：室堂 ➔ 立山站", type: "transport", detail: "搭乘立山高原巴士 (約 50 分鐘) 至美女平，轉乘登山纜車至立山站下山。" },
+                    { time: "15:40 - 17:00", title: "富山地方鐵道", type: "transport", detail: "立山站 ➔ 電鐵富山站 (下山腳軟，車上補眠)。" },
+                    { time: "17:20 - 17:45", title: "新幹線往金澤", type: "transport", detail: "北陸新幹線 Tsurugi，自由席即可。", cost: "¥2,860" },
+                    { time: "18:15", title: "入住東横INN金沢兼六園香林坊", type: "hotel", detail: "🎉 領取大行李！飯店位置極佳，明早步行去兼六園。" }
+                ]
             },
             {
                 id: 4, date: "2026-04-18", displayDate: "4/18 (六)", title: "金澤賞櫻與小京都", city: "金澤 (Kanazawa)", lat: 36.5613, lon: 136.6562,
-                planA: [
-                    { time: "09:00 - 11:30", title: "兼六園 & 金澤城公園 🌸", type: "spot", detail: "從飯店步行 5 分鐘即達。4月中旬極高機率櫻吹雪。", highlight: true },
+                events: [
+                    { time: "09:00 - 11:30", title: "兼六園 & 金澤城公園 🌸", type: "spot", detail: "從飯店步行 5 分鐘即達。強烈建議去「金澤城公園」賞櫻，櫻花樹密度極高！", highlight: true },
                     { time: "11:45 - 13:00", title: "近江町市場午餐 (肉食)", type: "food", detail: "市場除了海鮮，能登牛也極出名！", 
                       recs: [
-                          {n: "能登牛 壽司/串燒", t: "A5和牛", desc: "現場炙燒，入口即化"},
+                          {n: "能登牛 壽司/串燒", t: "A5和牛", desc: "現場炙燒，入口即化，完全避開海鮮"},
                           {n: "金澤冠軍咖哩", t: "黑咖哩豬排", desc: "在地濃厚黑咖哩"}
                       ]
                     },
-                    { time: "18:00 - 19:00", title: "戰術移動 (換飯店)", type: "task", detail: "取行李搭公車移防至【金澤站東口】住宿，為明早搭巴士做準備。" },
-                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in。晚餐就在車站「金澤百番街」吃拉麵或關東煮。", highlight: true }
-                ], planB: null
+                    { time: "14:00 - 17:00", title: "21世紀美術館 / 東茶屋街", type: "spot", detail: "打卡泳池，或者去東茶屋街食金箔冰淇淋。" },
+                    { time: "18:00 - 19:00", title: "戰術移動 (換飯店)", type: "task", detail: "取回大行李，搭公車移防至【金澤站東口】住宿，為明早搭巴士做準備。" },
+                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in。晚餐就在車站「金澤百番街」吃拉麵或肉類關東煮。", highlight: true }
+                ]
             },
             {
                 id: 5, date: "2026-04-19", displayDate: "4/19 (日)", title: "高山賞櫻 & 古川祭", city: "高山/古川", lat: 36.1408, lon: 137.2513, note: "古川祭正日",
-                planA: [
-                    { time: "08:10 - 10:25", title: "濃飛巴士往高山", type: "transport", detail: "【需預約】帶著大喼搭巴士。1 號月台候車。", cost: "¥3,600" },
-                    { time: "10:30", title: "酒店放低大喼", type: "task", detail: "抵達高山後，立刻過對面馬路前往 Residence Hotel 放行李，只需行 2 分鐘！", address: "岐阜県高山市花里町6丁目105" },
-                    { time: "11:00 - 13:00", title: "高山老街賞櫻 🌸", type: "food", detail: "中橋與宮川河畔櫻花絕景。", highlight: true,
+                events: [
+                    { time: "08:10 - 10:25", title: "濃飛巴士往高山", type: "transport", detail: "【需預約】帶著大喼搭巴士。1 號月台候車。大喼可放喺行李艙。", cost: "¥3,600" },
+                    { time: "10:30", title: "酒店放低大喼", type: "task", detail: "抵達高山後，立刻過對面馬路前往 Residence Hotel 放行李，只需行 2 分鐘！完全避開搶 Locker 災難！", address: "岐阜県高山市花里町6丁目105" },
+                    { time: "11:00 - 13:00", title: "高山老街賞櫻 🌸", type: "food", detail: "無行李一身輕！前往中橋與宮川河畔賞櫻。", highlight: true,
                       recs: [
-                          {n: "Kotte牛", t: "飛驒牛握壽司", desc: "必排隊名店"},
-                          {n: "味藏天國", t: "飛驒牛燒肉", desc: "高山最強和牛"}
+                          {n: "Kotte牛", t: "飛驒牛握壽司", desc: "必排隊名店，仙貝做底碟"},
+                          {n: "味藏天國", t: "飛驒牛燒肉", desc: "高山最強 A5 和牛"}
                       ]
                     },
-                    { time: "13:40 - 14:00", title: "JR 往飛驒古川", type: "transport", detail: "JR 就在飯店旁邊，非常方便。" },
-                    { time: "19:00 - 21:00", title: "🏮 古川祭：起太鼓", type: "festival", detail: "超級熱血！注意：夜晚溫度僅個位數，務必穿羽絨！", highlight: true },
-                    { time: "21:30", title: "返回高山酒店", type: "hotel", detail: "搭乘 JR 臨時列車回高山。返酒店正式 Check-in 休息。" }
-                ], planB: null
+                    { time: "13:40 - 14:00", title: "JR 往飛驒古川", type: "transport", detail: "前往《你的名字》聖地。車站就在飯店旁邊，非常方便。" },
+                    { time: "14:00 - 17:00", title: "古川祭 & 聖地巡禮", type: "spot", detail: "古川站天橋、白壁土藏街。欣賞白天展示的「屋台」。" },
+                    { time: "19:00 - 21:00", title: "🏮 古川祭：起太鼓", type: "festival", detail: "超級熱血！看數百名半裸男兒抬大鼓遊行。注意：夜晚溫度僅個位數，務必穿羽絨！", highlight: true },
+                    { time: "21:30", title: "返回高山 Residence Hotel", type: "hotel", detail: "搭乘 JR 臨時列車回高山。返酒店正式 Check-in 休息。" }
+                ]
             },
             {
                 id: 6, date: "2026-04-20", displayDate: "4/20 (一)", title: "名古屋購物", city: "名古屋 (Nagoya)", lat: 35.1815, lon: 136.9066,
-                planA: [
-                    { time: "08:00 - 09:30", title: "宮川朝市", type: "spot", detail: "買蘋果做早餐。" },
-                    { time: "10:30 - 13:10", title: "特急 Hida 往名古屋", type: "transport", detail: "JR Hida (飛驒號)。劃位建議選右側。", cost: "¥6,000" },
-                    { time: "14:00 - 18:30", title: "大須 & 榮商圈", type: "shop", detail: "名古屋最後衝刺。" },
-                    { time: "19:30", title: "名古屋名物晚餐", type: "food", detail: "矢場豚味噌豬排 或 世界之山將雞翼。", highlight: true },
-                    { time: "21:00", title: "入住東横INN名古屋栄", type: "hotel", detail: "整理戰利品。飯店在榮商圈核心。" }
-                ], planB: null
+                events: [
+                    { time: "08:00 - 09:30", title: "宮川朝市", type: "spot", detail: "買高山蘋果、飛驒牛包子做早餐。" },
+                    { time: "10:30 - 13:10", title: "特急 Hida 往名古屋", type: "transport", detail: "帶返大喼上車。JR Hida (飛驒號)。劃位建議選右側看飛驒川美景。", cost: "¥6,000" },
+                    { time: "14:00 - 18:30", title: "大須 & 榮商圈", type: "shop", detail: "大須挖寶（古著、電器）、榮商圈看綠洲 21 夜景。" },
+                    { time: "19:30", title: "名古屋名物晚餐", type: "food", detail: "榮商圈吃最地道的晚餐。", highlight: true,
+                      recs: [
+                          {n: "矢場とん (本店)", t: "味噌豬排", desc: "淋上濃郁紅味噌嘅極品豬排"},
+                          {n: "世界之山將", t: "夢幻手羽先", desc: "胡椒味極重嘅炸雞翼"}
+                      ]
+                    },
+                    { time: "21:00", title: "入住東横INN名古屋栄", type: "hotel", detail: "Check-in 整理戰利品。飯店在榮商圈核心。" }
+                ]
             },
             {
                 id: 7, date: "2026-04-21", displayDate: "4/21 (二)", title: "熱田神宮與返港", city: "名古屋 (Nagoya)", lat: 35.1815, lon: 136.9066,
-                planA: [
-                    { time: "10:00 - 11:30", title: "熱田神宮", type: "spot", detail: "參拜神劍。" },
-                    { time: "12:00 - 13:30", title: "交趾雞午餐 (地雞)", type: "food", detail: "用雞肉三吃代替鰻魚飯。", highlight: true,
+                events: [
+                    { time: "09:30", title: "Check-out 及移動", type: "task", detail: "離開酒店。建議將大行李帶到「名古屋站」嘅 Locker 寄放，方便晏晝直接去機場。" },
+                    { time: "10:00 - 11:30", title: "熱田神宮", type: "spot", detail: "早上先去參拜神劍，享受寧靜嘅森林浴。" },
+                    { time: "12:00 - 13:30", title: "極品交趾雞午餐", type: "food", detail: "返回名古屋站。用名古屋特產「交趾雞(地雞)」代替鰻魚飯，體驗一樣震撼！", highlight: true,
                       recs: [
-                          {n: "鳥開總本家", t: "交趾雞三吃", desc: "名古屋地雞，無海鮮過敏"},
-                          {n: "山本屋本店", t: "味噌燉烏冬", desc: "超濃郁紅味噌"}
+                          {n: "鳥開總本家 (名駅店)", t: "交趾雞三吃", desc: "極品烤雞肉飯！同鰻魚飯一樣有三種食法(原味/藥味/茶泡飯)"},
+                          {n: "山本屋本店", t: "味噌燉烏冬", desc: "超濃郁紅味噌湯底，麵條極具咬口，絕無海鮮"}
                       ]
                     },
+                    { time: "14:00 - 16:30", title: "最後補貨 (名駅周邊)", type: "shop", detail: "Bic Camera、名鐵百貨。買完攞行李搭車超方便。" },
                     { time: "16:45", title: "🚶 轉車指引：名鐵站", type: "task", detail: "從名古屋站步行至「名鐵 (Meitetsu)」車站約需 10 分鐘，別跟著 JR 走。", highlight: true },
                     { time: "17:00 - 17:30", title: "名鐵 μ-SKY 往機場", type: "transport", detail: "全車指定席，28分鐘直達機場。", cost: "¥1,250" },
                     { time: "21:00", title: "起飛返港 (HKG)", type: "flight", detail: "完美結束！" }
-                ], planB: null
+                ]
             }
         ];
 
@@ -274,6 +280,7 @@
                 };
                 if (lat && lon) fetchWeather();
             }, [lat, lon, date]);
+            
             if (!weather) return <div className="text-xs text-zinc-500 animate-pulse">...</div>;
             return (
                 <div className="flex items-center gap-1.5 bg-zinc-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-zinc-800 shadow-sm">
@@ -285,12 +292,11 @@
 
         const ItineraryView = () => {
             const [currentDayIdx, setCurrentDayIdx] = useState(0);
-            const [activePlans, setActivePlans] = useState({});
             const [toast, setToast] = useState('');
+            
             const day = ITINERARY_DATA[currentDayIdx];
-            const isPlanB = activePlans[day.id] === 'B';
-            const currentPlan = isPlanB ? (day.planB || day.planA) : day.planA;
-            const togglePlan = () => setActivePlans(prev => ({ ...prev, [day.id]: prev[day.id] === 'B' ? 'A' : 'B' }));
+            const currentPlan = day.events;
+            
             const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
             
             const handlePrevDay = () => { if (currentDayIdx > 0) setCurrentDayIdx(currentDayIdx - 1); };
@@ -303,7 +309,7 @@
                     <div className="bg-black/80 backdrop-blur-md sticky top-0 z-20 border-b border-zinc-800">
                         <div className="px-4 pt-3 pb-2 flex items-center gap-2">
                             <IconWrapper name="map" className="text-sky-400 w-4 h-4" />
-                            <h1 className="text-sm font-bold text-zinc-100 tracking-wide">立山黑部 智能行軍圖 V59</h1>
+                            <h1 className="text-sm font-bold text-zinc-100 tracking-wide">立山黑部 智能行軍圖 V60</h1>
                         </div>
                         <div className="flex overflow-x-auto no-scrollbar gap-2 px-4 pb-3 snap-x">
                             {ITINERARY_DATA.map((d, idx) => (
@@ -328,13 +334,6 @@
                             </div>
                             <WeatherWidget lat={day.lat} lon={day.lon} date={day.date} />
                         </div>
-
-                        {day.planB && (
-                            <button onClick={togglePlan} className={`w-full mb-6 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all border ${isPlanB ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-glow-accent' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800'}`}>
-                                <IconWrapper name="refresh-cw" className="w-4 h-4" />
-                                {isPlanB ? '顯示中：雨天備案' : '切換備案 (Plan B)'}
-                            </button>
-                        )}
 
                         <div className="space-y-4 relative pl-[14px]">
                             <div className="absolute left-[27px] top-4 bottom-4 w-[2px] bg-zinc-800 rounded-full"></div>
@@ -390,8 +389,8 @@
                 <div className="h-full overflow-y-auto pb-24 px-4 py-6">
                      <header className="mb-6"><h2 className="text-2xl font-bold text-zinc-50 mb-4 px-2">優惠券</h2>
                         <div className="flex gap-2 overflow-x-auto no-scrollbar px-2">
-                            {['ALL', '藥妝', '百貨', '電器', '免稅店', '雜貨'].map(tag => (
-                                <button key={tag} onClick={() => setFilter(tag)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${filter === tag ? 'bg-sky-500 text-zinc-950 border-sky-400' : 'bg-zinc-900 text-zinc-400 border-zinc-800'}`}>{tag}</button>
+                            {['ALL', '藥妝', '百貨', '電器', '免稅店', '運動', '雜貨'].map(tag => (
+                                <button key={tag} onClick={() => setFilter(tag)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${filter === tag ? 'bg-sky-500 text-zinc-950 border-sky-400 shadow-glow-primary' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800'}`}>{tag}</button>
                             ))}
                         </div>
                     </header>
