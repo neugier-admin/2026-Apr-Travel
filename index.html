@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026 立山黑部 & 古川祭 | Pro 終極整合版</title>
+    <title>2026 立山黑部 & 古川祭 | 終極確認版</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -19,11 +19,9 @@
             theme: {
                 extend: {
                     colors: {
-                        bg: '#09090b', 
-                        surface: '#18181b', 
-                        surfaceLight: '#27272a', 
-                        primary: '#38bdf8', 
-                        primaryDim: '#0284c7', 
+                        bg: '#09090b', // Slate 950
+                        surface: '#18181b', // Zinc 900
+                        primary: '#38bdf8', // Sky 400
                         textMain: '#fafafa', 
                         textSub: '#a1a1aa', 
                         accent: '#fbbf24', 
@@ -36,8 +34,6 @@
                     },
                     boxShadow: {
                         'glow-primary': '0 0 20px -5px rgba(56, 189, 248, 0.25)',
-                        'glow-accent': '0 0 20px -5px rgba(251, 191, 36, 0.25)',
-                        'glow-food': '0 0 20px -5px rgba(249, 115, 22, 0.25)',
                     }
                 }
             }
@@ -68,45 +64,19 @@
             overflow: hidden;
         }
 
-        .app-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-        }
-        
-        .task-box {
-            background: linear-gradient(to right, rgba(56, 189, 248, 0.1), transparent);
-            border-left: 3px solid #38bdf8;
-        }
-
-        .alert-box {
-            background: linear-gradient(to right, rgba(248, 113, 113, 0.1), transparent);
-            border-left: 3px solid #f87171;
-        }
-
-        .festival-box {
-             background: linear-gradient(to right, rgba(251, 191, 36, 0.1), transparent);
-             border-left: 3px solid #fbbf24;
-        }
-
-        .food-box {
-             background: linear-gradient(to right, rgba(249, 115, 22, 0.08), transparent);
-             border-left: 3px solid #f97316;
-        }
+        .task-box { border-left: 3px solid #38bdf8; background: linear-gradient(to right, rgba(56, 189, 248, 0.1), transparent); }
+        .alert-box { border-left: 3px solid #f87171; background: linear-gradient(to right, rgba(248, 113, 113, 0.1), transparent); }
+        .festival-box { border-left: 3px solid #fbbf24; background: linear-gradient(to right, rgba(251, 191, 36, 0.1), transparent); }
+        .food-box { border-left: 3px solid #f97316; background: linear-gradient(to right, rgba(249, 115, 22, 0.08), transparent); }
 
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.98) translateY(10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .animate-card {
-            animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
+        .animate-card { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Toast */
         .toast {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: #38bdf8; color: #09090b; padding: 8px 16px; border-radius: 99px;
@@ -120,102 +90,106 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
         const CONFIG = { weatherApiBase: "https://archive-api.open-meteo.com/v1/archive" };
 
-        // 最新優惠券 (加入大量免稅/百貨/運動)
         const COUPONS_DATA = [
-            { "name": "Donki唐吉訶德", "discount": "滿額免稅，再折5%", "expiry": "無期限", "final_url": "https://japanportal.donki-global.com/coupon/?ptcd=0076003303", "tags": ["雜貨", "深夜"] },
-            { "name": "Bic Camera", "discount": "滿額免稅，最高再折7%", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "藥妝"] },
-            { "name": "Salonia", "discount": "折5%(與Bic Camera併用)", "expiry": "2026/4/30", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "美容"] },
-            { "name": "愛電王Edion", "discount": "最高免稅+7%", "expiry": "2026/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/edion2025.jpg", "tags": ["電器"] },
-            { "name": "成田免稅店", "discount": "95折優惠", "expiry": "2026/3/31", "final_url": "https://duty-free-japan.jp/narita/ta/content/coupon2833-30.html", "tags": ["免稅店", "機場"] },
-            { "name": "SUNDRUG", "discount": "最高免稅+7%", "expiry": "無期限", "final_url": "https://www.funtime.com.tw/travelstore/coupon/sundrug%20_funtime.jpg", "tags": ["藥妝"] },
-            { "name": "名鐵百貨", "discount": "免稅+5%", "expiry": "2026/2/28", "final_url": "https://www.funtime.com.tw/travelstore/coupon/meitetsu_250516.png", "tags": ["百貨", "名古屋"] },
-            { "name": "Alpen", "discount": "免稅再折5%", "expiry": "2026/12/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/2026Alpen.png?ftfrom=blog-68172-20", "tags": ["運動"] },
-            { "name": "大丸松坂屋", "discount": "單筆滿3千日圓，享95折", "expiry": "2026/8/31", "final_url": "https://www.funtime.com.tw/travelstore/coupon/daimaru_250820.pdf", "tags": ["百貨"] }
+            { "name": "Donki唐吉訶德", "discount": "滿額免稅，最高再折7%", "expiry": "詳見圖片", "final_url": "https://japanportal.donki-global.com/coupon/?ptcd=0076003303", "tags": ["雜貨", "深夜"] },
+            { "name": "Bic Camera", "discount": "滿額免稅，最高再折7%", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "藥妝"] },
+            { "name": "Salonia", "discount": "折5%(與Bic Camera一併使用)", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/BicCamera_251217.png", "tags": ["電器", "美容"] },
+            { "name": "愛電王Edion", "discount": "滿額免稅，最高再折7%", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/edion2025.jpg", "tags": ["電器"] },
+            { "name": "Laox", "discount": "滿額免稅，再折8%", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/LAOX_2026.jpg", "tags": ["免稅店", "雜貨"] },
+            { "name": "成田機場免稅店", "discount": "享有95折優惠", "expiry": "詳見圖片", "final_url": "https://duty-free-japan.jp/narita/ta/content/coupon2833-30.html", "tags": ["免稅店", "機場"] },
+            { "name": "成田/羽田免稅線上訂", "discount": "享有95折優惠", "expiry": "詳見圖片", "final_url": "https://duty-free-japan.jp/qrposter/tc/?agentid=123", "tags": ["免稅店", "機場"] },
+            { "name": "SUNDRUG", "discount": "滿額免稅，再享3~7%折扣", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/sundrug%20_funtime.jpg", "tags": ["藥妝"] },
+            { "name": "SUNDRUGＸOZIO", "discount": "享10%折扣", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/Sundrug_ozio_FunTime.jpg?ftfrom=blog-68172-21", "tags": ["藥妝", "美容"] },
+            { "name": "鶴羽藥妝", "discount": "免稅+最高7%優惠", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/tsuruha2026.jpg", "tags": ["藥妝"] },
+            { "name": "札幌藥妝", "discount": "免稅+最高5%優惠", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/sapporo.jpg", "tags": ["藥妝"] },
+            { "name": "cosmos", "discount": "免稅+最高9%優惠", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/cosmos2026.jpg", "tags": ["藥妝"] },
+            { "name": "小田急百貨", "discount": "滿千可享6%優惠", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/odakyu.png", "tags": ["百貨"] },
+            { "name": "近鐵百貨店", "discount": "滿2千享95折優惠", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/kintetsu2026.jpg", "tags": ["百貨"] },
+            { "name": "銀座樂天免稅店", "discount": "滿萬折千，最高折2千", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/Lottedutyfree_GINZA_FunTime2026.jpg", "tags": ["免稅店", "百貨"] },
+            { "name": "大丸松坂屋", "discount": "單筆滿3千日圓，享95折", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/daimaru_250820.pdf", "tags": ["百貨"] },
+            { "name": "西武百貨", "discount": "消費滿1千日圓，享95折", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/seibu2026.png", "tags": ["百貨"] },
+            { "name": "京王百貨", "discount": "單筆滿3千日圓，享95折", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/Keio_2.jpeg", "tags": ["百貨"] },
+            { "name": "Alpen", "discount": "免稅再折5%", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/2026Alpen.png?ftfrom=blog-68172-20", "tags": ["運動"] },
+            { "name": "Victoria運動用品", "discount": "免稅再折5%", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/FunTime_Victoria_202606.jpg", "tags": ["運動"] }
         ];
 
-        // 終極無備案、防海鮮過敏、精確時間表行程
+        // 終極完美主線 (無 Plan B, 無海鮮, 精確時間表)
         const ITINERARY_DATA = [
             {
                 id: 1, date: "2026-04-15", displayDate: "4/15 (三)", title: "抵達東京", city: "東京 (Tokyo)", lat: 35.6895, lon: 139.6917,
                 events: [
-                    { time: "20:30", title: "抵達成田機場 (NRT)", type: "flight", detail: "入境預計 1hr。建議機上先填好 Visit Japan Web QR Code。" },
-                    { time: "21:30 - 22:15", title: "Skyliner 往上野/鶯谷", type: "transport", detail: "Skyliner 至京成上野站 (45分)。\n轉乘 JR 山手線 至 鶯谷站 (1站)。", cost: "¥2,570" },
-                    { time: "23:00", title: "入住東横INN鶯谷駅前", type: "hotel", detail: "Check-in 放行李。飯店就在鶯谷站北口步行 2 分鐘。", address: "東京都台東区根岸1-4-1" },
-                    { time: "⚠️ 睡前任務", title: "填寫宅急便運單", type: "task", detail: "向櫃檯索取運單，寄往 Day 3 的【東横INN金沢兼六園香林坊】。\n指定抵達日：4/17 (後天)。" }
+                    { time: "20:30", title: "抵達成田機場 (NRT)", type: "flight", detail: "入境手續約 1小時。建議機上先填好 Visit Japan Web QR Code。" },
+                    { time: "21:30 - 22:15", title: "Skyliner 往上野/鶯谷", type: "transport", detail: "Skyliner 至京成上野站 (45分)。轉乘 JR 山手線 至 鶯谷站 (1站)。", cost: "¥2,570" },
+                    { time: "23:00", title: "入住東横INN鶯谷駅前", type: "hotel", detail: "Check-in 放行李。準備明早填運單。", address: "東京都台東区根岸1-4-1" },
+                    { time: "⚠️ 睡前任務", title: "準備宅急便資料", type: "task", detail: "向櫃檯索取運單，準備寄往【東横INN金沢兼六園香林坊】。(指定抵達日：4/17)" }
                 ]
             },
             {
                 id: 2, date: "2026-04-16", displayDate: "4/16 (四)", title: "東京 -> 長野大町", city: "長野 (Nagano)", lat: 36.6485, lon: 138.1942,
                 events: [
-                    { time: "08:30", title: "【寄行李】去金澤", type: "task", detail: "飯店櫃檯寄出大喼。今天起只背小背包 (1晚衣物)，準備山區行軍！", address: "石川県金沢市香林坊2-2-5" },
-                    { time: "09:00 - 12:00", title: "上野購物 & 早午餐 (無海鮮)", type: "food", detail: "鶯谷去上野只要 2 分鐘。阿美橫丁最後補貨零食。", highlight: true,
-                      recs: [
-                          {n: "牛かつ もと村", t: "炸牛排", desc: "自煎酥脆炸牛排，無海鮮"},
-                          {n: "肉之大山", t: "和牛可樂餅", desc: "阿美橫丁排隊美食"}
-                      ]
+                    { time: "08:30", title: "【寄行李】去金澤", type: "task", detail: "將大喼寄往金澤。今天起只背 20L 背囊 (1晚衣物)，準備山區行軍！", address: "石川県金沢市香林坊2-2-5" },
+                    { time: "09:00 - 12:00", title: "東京早午餐 & 購物", type: "food", detail: "鶯谷出發，建議去上野阿美橫丁食早午餐兼買零食。", highlight: true,
+                      recs: [{n: "牛かつ もと村", t: "炸牛排", desc: "自煎酥脆炸牛排，無海鮮"}, {n: "肉之大山", t: "和牛可樂餅", desc: "阿美橫丁人氣美食"}]
                     },
-                    { time: "12:30 - 14:03", title: "新幹線 Hakutaka 563號", type: "transport", detail: "上野站 ➔ 長野站。\n上野新幹線月台在地底深處，建議 12:10 就要到站月台等候。", cost: "¥8,000" },
-                    { time: "14:03 - 14:30", title: "🚶 轉車指引：長野站", type: "task", detail: "【27分鐘緩衝】\n1. 下車後上樓出新幹線閘口。\n2. 找「東口 (East Exit)」指標。\n3. 下扶梯到 1 樓找到【25 號月台】。", highlight: true },
-                    { time: "14:30 - 15:50", title: "Alpico 特急巴士 (尾班)", type: "alert", detail: "長野站東口 25號月台 ➔ 大町溫泉鄉。\n🚨 注意：春季直達巴士最遲 14:30 開出，絕對唔可以錯過！", cost: "¥2,600" },
-                    { time: "16:00 - 18:00", title: "大町溫泉鄉散策", type: "spot", detail: "入住【織花】後：\n1. 藥師堂散策：森林系美拍\n2. 森林足湯：看殘雪泡腳",
-                      recs: [
-                          {n: "御燒 (Oyaki)", t: "信州名物", desc: "烤麵餅包野菜，絕無海鮮"},
-                          {n: "清酒博物館", t: "景點", desc: "買長野地酒好去處"}
-                      ]
+                    { time: "12:30 - 14:03", title: "新幹線 Hakutaka 563號", type: "transport", detail: "上野站 ➔ 長野站。(上野新幹線月台在地底深處，建議 12:10 就落月台等候)", cost: "¥8,000" },
+                    { time: "14:03 - 14:30", title: "🚶 轉車指引：長野站", type: "task", detail: "【27分鐘緩衝】1. 下車後上樓出新幹線閘口。2. 找「東口 (East Exit)」指標。3. 下扶梯到 1 樓找到【25 號月台】。", highlight: true },
+                    { time: "14:30 - 15:50", title: "Alpico 特急巴士 (尾班車)", type: "alert", detail: "長野站東口 25號月台 ➔ 大町溫泉鄉。\n🚨 絕對唔可以錯過！春季直達巴士最遲 14:30 開出！", cost: "¥2,600" },
+                    { time: "16:00 - 18:00", title: "大町溫泉鄉休閒時光", type: "spot", detail: "入住【織花】後建議：1. 藥師堂散策 2. 森林足湯 3. 食信州御燒 (Oyaki)。",
+                      recs: [{n: "御燒 (Oyaki)", t: "信州名物", desc: "烤麵餅包野菜，絕無海鮮"}, {n: "清酒博物館", t: "景點", desc: "買長野地酒"}]
                     },
-                    { time: "18:30", title: "入住織花：懷石料理", type: "hotel", detail: "享受溫泉與信州肉料理晚餐。早睡準備明日 07:00 登山。" }
+                    { time: "18:30", title: "入住織花：懷石料理", type: "hotel", detail: "享受溫泉與美味的信州肉料理晚餐。早睡準備明日登山。" }
                 ]
             },
             {
-                id: 3, date: "2026-04-17", displayDate: "4/17 (五)", title: "穿越雪之大谷", city: "立山 (Alpine)", lat: 36.5833, lon: 137.6, note: "無行李極度舒適",
+                id: 3, date: "2026-04-17", displayDate: "4/17 (五)", title: "立山黑部・雪之大谷", city: "立山 (Alpine)", lat: 36.5833, lon: 137.6, note: "無行李極度舒適",
                 events: [
-                    { time: "08:00 - 08:40", title: "路線巴士前往扇澤站", type: "transport", detail: "從信濃大町出發。車程約 40 分鐘，抵達後去窗口兌換實體票。" },
-                    { time: "09:30 - 11:45", title: "阿爾卑斯路線 (前半段)", type: "transport", detail: "【09:30】關電電氣巴士出發。\n【水壩】徒步觀光約 1 小時。\n【黑部平 & 大觀峰】轉乘纜車，各停留約 20-30 分鐘拍照。", cost: "套票" },
-                    { time: "12:00 - 14:00", title: "室堂・雪之大谷 & 午餐 (無海鮮)", type: "spot", detail: "海拔 2450m。漫步 20 米高雪壁 (約逛1小時)，然後喺室堂站食無海鮮午餐休息。", highlight: true,
-                      recs: [
-                          {n: "室堂餐廳", t: "黑部豚肉拉麵 / 山賊燒", desc: "海拔最高拉麵店，熱呼呼豚肉湯頭"}
-                      ]
+                    { time: "08:00 - 08:40", title: "巴士：大町 -> 扇澤站", type: "transport", detail: "從大町出發前往穿越路線起點。抵達後去窗口兌換實體票。" },
+                    { time: "09:30 - 10:45", title: "關電電氣巴士 & 黑部水壩", type: "spot", detail: "09:30 🚌 搭乘【關電隧道電氣巴士】。\n09:46 📍 抵達黑部水壩，停留約 1 小時走過水壩堰堤，影相打卡。", cost: "套票" },
+                    { time: "10:45 - 11:20", title: "登山纜車 & 黑部平", type: "spot", detail: "10:45 🚋 搭乘【黑部登山纜車】。\n10:50 📍 抵達黑部平，上觀景台看風景 (停留約 30 分鐘)。" },
+                    { time: "11:20 - 11:45", title: "空中纜車 & 大觀峰", type: "spot", detail: "11:20 🚡 搭乘【立山空中纜車】(無支柱纜車，風景最靚)。\n11:27 📍 抵達大觀峰，稍作休息拍照 (停留約 20 分鐘)。" },
+                    { time: "11:45 - 14:00", title: "無軌電車 & 室堂 (高潮！)", type: "spot", detail: "11:45 🚎 搭乘【立山隧道無軌電車】。\n12:00 📍 抵達室堂 (停留約 2 小時)。行「雪之大谷」感受 20 米高雪牆，然後食無海鮮午餐。", highlight: true,
+                      recs: [{n: "室堂餐廳", t: "黑部豚肉拉麵", desc: "海拔最高拉麵店，熱呼呼豚肉湯頭"}]
                     },
-                    { time: "14:00 - 15:30", title: "下山：室堂 ➔ 立山站", type: "transport", detail: "搭乘立山高原巴士 (約 50 分鐘) 至美女平，轉乘登山纜車至立山站下山。" },
-                    { time: "15:40 - 17:00", title: "富山地方鐵道", type: "transport", detail: "立山站 ➔ 電鐵富山站 (下山腳軟，車上補眠)。" },
-                    { time: "17:20 - 17:45", title: "新幹線往金澤", type: "transport", detail: "北陸新幹線 Tsurugi，自由席即可。", cost: "¥2,860" },
+                    { time: "14:00 - 15:10", title: "高原巴士 & 美女平", type: "transport", detail: "14:00 🚌 搭乘【立山高原巴士】往美女平 (車程 50 分鐘，可以睡覺)。\n14:50 📍 抵達美女平，停留 20 分鐘排隊轉車。" },
+                    { time: "15:10 - 16:50", title: "下山往富山", type: "transport", detail: "15:10 🚋 搭乘【立山登山纜車】往立山站。\n15:40 🚆 轉乘【富山地方鐵道】前往電鐵富山站 (16:50抵達)。" },
+                    { time: "17:20 - 17:45", title: "新幹線：富山 -> 金澤", type: "transport", detail: "🚄 轉乘北陸新幹線 Tsurugi (劍號)，自由席即可。", cost: "¥2,860" },
                     { time: "18:15", title: "入住東横INN金沢兼六園香林坊", type: "hotel", detail: "🎉 領取大行李！飯店位置極佳，明早步行去兼六園。" }
                 ]
             },
             {
                 id: 4, date: "2026-04-18", displayDate: "4/18 (六)", title: "金澤賞櫻與小京都", city: "金澤 (Kanazawa)", lat: 36.5613, lon: 136.6562,
                 events: [
-                    { time: "09:00 - 11:30", title: "兼六園 & 金澤城公園 🌸", type: "spot", detail: "從飯店步行 5 分鐘即達。強烈建議去「金澤城公園」賞櫻，櫻花樹密度極高！", highlight: true },
-                    { time: "11:45 - 13:00", title: "近江町市場午餐 (肉食)", type: "food", detail: "市場除了海鮮，能登牛也極出名！", 
-                      recs: [
-                          {n: "能登牛 壽司/串燒", t: "A5和牛", desc: "現場炙燒，入口即化，完全避開海鮮"},
-                          {n: "金澤冠軍咖哩", t: "黑咖哩豬排", desc: "在地濃厚黑咖哩"}
-                      ]
+                    { time: "09:00 - 11:30", title: "兼六園 & 金澤城公園 🌸", type: "spot", detail: "從飯店步行即達。強烈建議去「金澤城公園」賞櫻/櫻吹雪，櫻花樹密度極高，配搭古城牆絕美！", highlight: true },
+                    { time: "11:45 - 13:00", title: "近江町市場午餐 (無海鮮)", type: "food", detail: "市場除了海鮮，能登牛也是北陸極品！", 
+                      recs: [{n: "能登牛 壽司/串燒", t: "A5和牛", desc: "市場內有多家和牛攤檔，即叫即燒"}, {n: "金澤冠軍咖哩", t: "黑咖哩豬排", desc: "金澤特產：濃郁狂野嘅黑咖哩"}]
                     },
-                    { time: "14:00 - 17:00", title: "21世紀美術館 / 東茶屋街", type: "spot", detail: "打卡泳池，或者去東茶屋街食金箔冰淇淋。" },
-                    { time: "18:00 - 19:00", title: "戰術移動 (換飯店)", type: "task", detail: "取回大行李，搭公車移防至【金澤站東口】住宿，為明早搭巴士做準備。" },
-                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in。晚餐就在車站「金澤百番街」吃拉麵或肉類關東煮。", highlight: true }
+                    { time: "14:00 - 17:00", title: "21世紀美術館 / 東茶屋街", type: "spot", detail: "打卡泳池，或者去東茶屋街食「箔一」金箔冰淇淋。" },
+                    { time: "18:00 - 19:00", title: "更換飯店 (戰術移動)", type: "task", detail: "回香林坊取行李，搭公車移防至【金澤站東口】住宿，為明早搭巴士做準備。" },
+                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in 放低行李。" },
+                    { time: "20:00", title: "金澤百番街晚餐", type: "food", detail: "直接喺車站入面搞掂晚餐。",
+                      recs: [{n: "黑百合", t: "金澤關東煮", desc: "50年老字號，車麩同牛筋必點"}, {n: "麵屋大河", t: "味噌拉麵", desc: "金澤排名第一拉麵"}]
+                    }
                 ]
             },
             {
-                id: 5, date: "2026-04-19", displayDate: "4/19 (日)", title: "高山賞櫻 & 古川祭", city: "高山/古川", lat: 36.1408, lon: 137.2513, note: "古川祭正日",
+                id: 5, date: "2026-04-19", displayDate: "4/19 (日)", title: "高山賞櫻 & 古川祭", city: "高山/古川", lat: 36.1408, lon: 137.2513, note: "祭典高潮",
                 events: [
-                    { time: "08:10 - 10:25", title: "濃飛巴士往高山", type: "transport", detail: "【需預約】帶著大喼搭巴士。1 號月台候車。大喼可放喺行李艙。", cost: "¥3,600" },
-                    { time: "10:30", title: "酒店放低大喼", type: "task", detail: "抵達高山後，立刻過對面馬路前往 Residence Hotel 放行李，只需行 2 分鐘！完全避開搶 Locker 災難！", address: "岐阜県高山市花里町6丁目105" },
-                    { time: "11:00 - 13:00", title: "高山老街賞櫻 🌸", type: "food", detail: "無行李一身輕！前往中橋與宮川河畔賞櫻。", highlight: true,
-                      recs: [
-                          {n: "Kotte牛", t: "飛驒牛握壽司", desc: "必排隊名店，仙貝做底碟"},
-                          {n: "味藏天國", t: "飛驒牛燒肉", desc: "高山最強 A5 和牛"}
-                      ]
+                    { time: "08:10 - 10:25", title: "濃飛巴士往高山", type: "transport", detail: "帶住大喼搭乘濃飛巴士（需提前一個月預約）。大喼可放喺下層行李艙。", cost: "¥3,600" },
+                    { time: "10:30", title: "先去飯店放低大喼", type: "task", detail: "抵達高山後立刻前往飯店寄放行李。只需步行約 2 分鐘，完美避開搶 Locker 災難！", address: "岐阜県高山市花里町6丁目105" },
+                    { time: "11:00 - 13:00", title: "高山老街賞櫻午餐 🌸", type: "food", detail: "【全團最靚賞櫻位】中橋配櫻花！影完靚相再去老街掃街食嘢。", highlight: true,
+                      recs: [{n: "Kotte牛", t: "飛驒牛握壽司", desc: "必排隊名店，入口即化"}, {n: "味藏天國", t: "飛驒牛燒肉", desc: "超高質 A5 和牛"}]
                     },
-                    { time: "13:40 - 14:00", title: "JR 往飛驒古川", type: "transport", detail: "前往《你的名字》聖地。車站就在飯店旁邊，非常方便。" },
-                    { time: "14:00 - 17:00", title: "古川祭 & 聖地巡禮", type: "spot", detail: "古川站天橋、白壁土藏街。欣賞白天展示的「屋台」。" },
-                    { time: "19:00 - 21:00", title: "🏮 古川祭：起太鼓", type: "festival", detail: "超級熱血！看數百名半裸男兒抬大鼓遊行。注意：夜晚溫度僅個位數，務必穿羽絨！", highlight: true },
-                    { time: "21:30", title: "返回高山 Residence Hotel", type: "hotel", detail: "搭乘 JR 臨時列車回高山。返酒店正式 Check-in 休息。" }
+                    { time: "13:40 - 14:00", title: "JR 往飛驒古川", type: "transport", detail: "前往《你的名字》聖地。" },
+                    { time: "14:00 - 17:00", title: "聖地巡禮 & 祭典氛圍", type: "spot", detail: "古川站天橋、白壁土藏街。欣賞白天展示的「屋台」。" },
+                    { time: "17:30", title: "祭典晚餐", type: "food", detail: "體驗古川祭典氛圍！", 
+                      recs: [{n: "古川祭 屋台", t: "祭典小食", desc: "炒麵、唐揚雞等祭典必食"}, {n: "岡田屋", t: "飛驒牛串燒", desc: "古川老街上嘅地道小店"}]
+                    },
+                    { time: "19:00 - 21:00", title: "🏮 古川祭：起太鼓", type: "festival", detail: "看數百名半裸男兒抬大鼓遊行，超級熱血！\n❄️ 注意：高山夜間溫度僅個位數，務必穿羽絨/厚外套！", highlight: true },
+                    { time: "21:30", title: "入住 Residence Hotel", type: "hotel", detail: "搭乘 JR 臨時列車回高山。直接回 Residence Hotel Takayama Station 辦理正式 Check-in 休息。" }
                 ]
             },
             {
@@ -223,14 +197,12 @@
                 events: [
                     { time: "08:00 - 09:30", title: "宮川朝市", type: "spot", detail: "買高山蘋果、飛驒牛包子做早餐。" },
                     { time: "10:30 - 13:10", title: "特急 Hida 往名古屋", type: "transport", detail: "帶返大喼上車。JR Hida (飛驒號)。劃位建議選右側看飛驒川美景。", cost: "¥6,000" },
-                    { time: "14:00 - 18:30", title: "大須 & 榮商圈", type: "shop", detail: "大須挖寶（古著、電器）、榮商圈看綠洲 21 夜景。" },
-                    { time: "19:30", title: "名古屋名物晚餐", type: "food", detail: "榮商圈吃最地道的晚餐。", highlight: true,
-                      recs: [
-                          {n: "矢場とん (本店)", t: "味噌豬排", desc: "淋上濃郁紅味噌嘅極品豬排"},
-                          {n: "世界之山將", t: "夢幻手羽先", desc: "胡椒味極重嘅炸雞翼"}
-                      ]
+                    { time: "14:00 - 16:30", title: "大須商店街", type: "shop", detail: "挖寶時間：古著、電器、雜貨。" },
+                    { time: "17:00 - 18:30", title: "榮商圈 / 綠洲21", type: "spot", detail: "逛街 + 看夜景。" },
+                    { time: "19:30", title: "名古屋名物晚餐", type: "food", detail: "喺榮商圈食名古屋最具代表性嘅晚餐。", highlight: true,
+                      recs: [{n: "矢場町本店", t: "鐵板味噌豬排", desc: "淋上濃郁紅味噌嘅極品炸豬排"}, {n: "世界之山將", t: "夢幻手羽先", desc: "胡椒味極重嘅炸雞翼"}]
                     },
-                    { time: "21:00", title: "入住東横INN名古屋栄", type: "hotel", detail: "Check-in 整理戰利品。飯店在榮商圈核心。" }
+                    { time: "21:00", title: "入住東横INN名古屋栄", type: "hotel", detail: "Check-in 整理戰利品！位於榮商圈，交通非常方便。" }
                 ]
             },
             {
@@ -238,16 +210,13 @@
                 events: [
                     { time: "09:30", title: "Check-out 及移動", type: "task", detail: "離開酒店。建議將大行李帶到「名古屋站」嘅 Locker 寄放，方便晏晝直接去機場。" },
                     { time: "10:00 - 11:30", title: "熱田神宮", type: "spot", detail: "早上先去參拜神劍，享受寧靜嘅森林浴。" },
-                    { time: "12:00 - 13:30", title: "極品交趾雞午餐", type: "food", detail: "返回名古屋站。用名古屋特產「交趾雞(地雞)」代替鰻魚飯，體驗一樣震撼！", highlight: true,
-                      recs: [
-                          {n: "鳥開總本家 (名駅店)", t: "交趾雞三吃", desc: "極品烤雞肉飯！同鰻魚飯一樣有三種食法(原味/藥味/茶泡飯)"},
-                          {n: "山本屋本店", t: "味噌燉烏冬", desc: "超濃郁紅味噌湯底，麵條極具咬口，絕無海鮮"}
-                      ]
+                    { time: "12:00 - 13:30", title: "極品交趾雞午餐", type: "food", detail: "返回名古屋站。用極致嘅名古屋特產「交趾雞(地雞)」畫上完美句號！", highlight: true,
+                      recs: [{n: "鳥開總本家 (名駅店)", t: "交趾雞三吃", desc: "極品烤雞肉飯！同鰻魚飯一樣有三種食法"}, {n: "山本屋本店", t: "味噌燉烏冬", desc: "超濃郁紅味噌湯底，絕無海鮮"}]
                     },
-                    { time: "14:00 - 16:30", title: "最後補貨 (名駅周邊)", type: "shop", detail: "Bic Camera、名鐵百貨。買完攞行李搭車超方便。" },
+                    { time: "14:00 - 16:30", title: "最後補貨 (名駅周邊)", type: "shop", detail: "Bic Camera、千里馬藥局、名鐵百貨。買完攞返行李直接搭車超方便。" },
                     { time: "16:45", title: "🚶 轉車指引：名鐵站", type: "task", detail: "從名古屋站步行至「名鐵 (Meitetsu)」車站約需 10 分鐘，別跟著 JR 走。", highlight: true },
-                    { time: "17:00 - 17:30", title: "名鐵 μ-SKY 往機場", type: "transport", detail: "全車指定席，28分鐘直達機場。", cost: "¥1,250" },
-                    { time: "21:00", title: "起飛返港 (HKG)", type: "flight", detail: "完美結束！" }
+                    { time: "17:00 - 17:30", title: "名鐵 μ-SKY 往機場", type: "transport", detail: "喺名鐵名古屋站上車。全車指定席，28分鐘直達 NGO 機場。", cost: "¥1,250" },
+                    { time: "21:00", title: "起飛返港 (HKG)", type: "flight", detail: "完美結束旅程！" }
                 ]
             }
         ];
@@ -259,7 +228,8 @@
         };
 
         const CopyButton = ({ text, onCopy }) => (
-            <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(text).then(onCopy); }}
+            <button 
+                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(text).then(onCopy); }}
                 className="ml-2 inline-flex items-center gap-1 bg-zinc-800 hover:bg-sky-900/50 text-sky-400 px-2 py-1 rounded text-[10px] font-bold transition-colors border border-zinc-700"
             >
                 <IconWrapper name="copy" className="w-3 h-3" /> 複製
@@ -280,23 +250,23 @@
                 };
                 if (lat && lon) fetchWeather();
             }, [lat, lon, date]);
-            
-            if (!weather) return <div className="text-xs text-zinc-500 animate-pulse">...</div>;
+
+            if (!weather) return <div className="text-xs text-zinc-500 animate-pulse">連線中...</div>;
             return (
                 <div className="flex items-center gap-1.5 bg-zinc-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-zinc-800 shadow-sm">
                     <IconWrapper name={weather.code <= 3 ? "sun" : "cloud"} className="w-3.5 h-3.5 text-sky-400" />
                     <span className="font-bold text-xs text-zinc-200">{weather.max}°</span>
+                    <span className="text-[10px] text-zinc-500">/{weather.min}°</span>
                 </div>
             );
         };
 
+        // --- Main Views ---
         const ItineraryView = () => {
             const [currentDayIdx, setCurrentDayIdx] = useState(0);
             const [toast, setToast] = useState('');
-            
             const day = ITINERARY_DATA[currentDayIdx];
-            const currentPlan = day.events;
-            
+            const currentPlan = day.events; // 只有主線 Events
             const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
             
             const handlePrevDay = () => { if (currentDayIdx > 0) setCurrentDayIdx(currentDayIdx - 1); };
@@ -308,8 +278,10 @@
                     
                     <div className="bg-black/80 backdrop-blur-md sticky top-0 z-20 border-b border-zinc-800">
                         <div className="px-4 pt-3 pb-2 flex items-center gap-2">
-                            <IconWrapper name="map" className="text-sky-400 w-4 h-4" />
-                            <h1 className="text-sm font-bold text-zinc-100 tracking-wide">立山黑部 智能行軍圖 V60</h1>
+                            <div className="w-6 h-6 rounded bg-sky-500/20 flex items-center justify-center">
+                                <IconWrapper name="map" className="text-sky-400 w-4 h-4" />
+                            </div>
+                            <h1 className="text-sm font-bold text-zinc-100 tracking-wide">立山黑部 終極確認版</h1>
                         </div>
                         <div className="flex overflow-x-auto no-scrollbar gap-2 px-4 pb-3 snap-x">
                             {ITINERARY_DATA.map((d, idx) => (
@@ -340,41 +312,68 @@
                             {currentPlan.map((item, i) => (
                                 <div key={i} className="relative pl-8">
                                     <div className={`absolute left-[-14px] top-0 w-8 h-8 rounded-full flex items-center justify-center z-10 border-[3px] border-[#09090b] ${
-                                        item.type === 'task' ? 'bg-sky-500 text-zinc-950' : 
-                                        item.type === 'alert' ? 'bg-red-500 text-white' : 
-                                        item.type === 'food' ? 'bg-orange-500 text-white' : 
-                                        item.type === 'festival' ? 'bg-amber-400 text-zinc-950' : 
+                                        item.type === 'task' || item.type === 'luggage' ? 'bg-sky-500 text-zinc-950' :
+                                        item.type === 'alert' ? 'bg-red-500 text-white' :
+                                        item.type === 'festival' ? 'bg-amber-400 text-zinc-950' :
+                                        item.type === 'food' ? 'bg-orange-500 text-white' :
                                         item.highlight ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-400'
                                     }`}>
-                                        <IconWrapper name={item.type === 'food' ? 'utensils' : item.type === 'transport' ? 'train-front' : item.type === 'festival' ? 'flame' : item.type === 'alert' ? 'triangle-alert' : 'map-pin'} className="w-3.5 h-3.5" />
+                                        <IconWrapper name={
+                                            item.type === 'luggage' ? 'package-check' :
+                                            item.type === 'task' ? 'clipboard-list' :
+                                            item.type === 'alert' ? 'triangle-alert' :
+                                            item.type === 'festival' ? 'flame' :
+                                            item.type === 'transport' ? 'train-front' : 
+                                            item.type === 'food' ? 'utensils' : 
+                                            item.type === 'shop' ? 'shopping-bag' : 
+                                            item.type === 'hotel' ? 'bed' : 'map-pin'
+                                        } className="w-3.5 h-3.5" />
                                     </div>
-                                    <div className={`app-card p-4 ${item.type === 'task' ? 'task-box' : item.type === 'alert' ? 'alert-box' : item.type === 'food' ? 'food-box' : item.type === 'festival' ? 'festival-box' : ''}`}>
+
+                                    <div className={`app-card p-4 ${item.type === 'task' || item.type === 'luggage' ? 'task-box' : item.type === 'alert' ? 'alert-box' : item.type === 'festival' ? 'festival-box' : item.type === 'food' ? 'food-box' : ''}`}>
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className={`text-[11px] font-bold font-mono px-1.5 py-0.5 rounded ${item.type === 'food' ? 'bg-orange-500/20 text-orange-400' : 'bg-zinc-800 text-zinc-400'}`}>{item.time.split(' - ')[0]}</span>
-                                            {item.type !== 'flight' && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title + ' ' + day.city)}`} target="_blank" className="bg-zinc-800 p-1.5 rounded-lg border border-zinc-700 text-sky-400"><IconWrapper name="map" className="w-4 h-4" /></a>}
+                                            <span className={`text-[11px] font-bold font-mono px-1.5 py-0.5 rounded ${
+                                                item.type === 'alert' ? 'bg-red-500/20 text-red-400' :
+                                                item.type === 'task' || item.type === 'luggage' ? 'bg-sky-500/20 text-sky-400' :
+                                                item.type === 'food' ? 'bg-orange-500/20 text-orange-400' :
+                                                'bg-zinc-800 text-zinc-400'
+                                            }`}>{item.time.split(' - ')[0]}</span>
+                                            
+                                            {item.type !== 'task' && item.type !== 'luggage' && item.type !== 'alert' && item.type !== 'flight' && (
+                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title + ' ' + day.city)}`} target="_blank" className="bg-zinc-800/80 p-1.5 rounded-lg border border-zinc-700 text-sky-400 hover:bg-sky-500/20 transition-colors">
+                                                    <IconWrapper name="map" className="w-4 h-4" />
+                                                </a>
+                                            )}
                                         </div>
-                                        <h3 className={`text-base font-bold mb-1.5 ${item.type === 'food' ? 'text-orange-400' : item.type === 'festival' ? 'text-amber-400' : item.highlight ? 'text-sky-300' : 'text-zinc-100'}`}>{item.title}</h3>
-                                        <div className="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{item.detail}</div>
                                         
+                                        <h3 className={`text-base font-bold mb-1.5 leading-snug ${
+                                            item.type === 'alert' ? 'text-red-400' :
+                                            item.type === 'festival' ? 'text-amber-400' :
+                                            item.type === 'food' ? 'text-orange-400' :
+                                            item.highlight ? 'text-sky-300' : 'text-zinc-100'
+                                        }`}>{item.title}</h3>
+                                        
+                                        <div className="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{item.detail}</div>
+
                                         {item.recs && (
                                             <div className="mt-3 space-y-2 border-t border-zinc-800 pt-3">
-                                                <div className="text-[10px] font-bold text-zinc-500 flex items-center gap-1 mb-1"><IconWrapper name="sparkles" className="w-3 h-3 text-orange-400" /> AI 推薦</div>
+                                                <div className="text-[10px] font-bold text-zinc-500 flex items-center gap-1 mb-1"><IconWrapper name="sparkles" className="w-3 h-3 text-orange-400" /> 防海鮮美食推薦</div>
                                                 {item.recs.map((rec, rIdx) => (
-                                                    <div key={rIdx} className="bg-black/30 p-2 rounded-lg border border-zinc-800/50 flex justify-between items-center">
-                                                        <div><div className="font-bold text-xs text-zinc-200">{rec.n}</div><div className="text-[10px] text-zinc-500">{rec.t} · {rec.desc}</div></div>
-                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rec.n + ' ' + day.city)}`} target="_blank" className="text-zinc-600 hover:text-orange-400"><IconWrapper name="navigation" className="w-4 h-4" /></a>
+                                                    <div key={rIdx} className="bg-black/30 p-2 rounded-lg border border-zinc-800/50 flex justify-between items-center group hover:border-orange-500/30 transition-colors">
+                                                        <div><div className="font-bold text-xs text-zinc-200">{rec.n}</div><div className="text-[10px] text-zinc-500 line-clamp-1">{rec.t} · {rec.desc}</div></div>
+                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rec.n + ' ' + day.city)}`} target="_blank" className="text-zinc-600 group-hover:text-orange-400 pl-2"><IconWrapper name="navigation" className="w-4 h-4" /></a>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
-                                        {item.address && <div className="mt-3 bg-black/40 p-2 rounded border border-zinc-800 flex justify-between items-center"><span className="text-xs text-zinc-500 font-mono truncate">{item.address}</span><CopyButton text={item.address} onCopy={() => showToast('地址已複製')} /></div>}
-                                        {item.cost && <div className="mt-2 inline-flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20"><IconWrapper name="banknote" className="w-3 h-3" /> {item.cost}</div>}
+                                        {item.address && <div className="mt-3 bg-black/40 p-2 rounded border border-zinc-800 flex justify-between items-center"><span className="text-xs text-zinc-500 font-mono truncate">{item.address}</span><CopyButton text={item.address} onCopy={() => showToast('地址已複製！')} /></div>}
+                                        {item.cost && <div className="mt-3 inline-flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20"><IconWrapper name="banknote" className="w-3 h-3" /> {item.cost}</div>}
                                     </div>
                                 </div>
                             ))}
                         </div>
                         <div className="flex justify-between mt-8">
-                             <button onClick={handlePrevDay} disabled={currentDayIdx===0} className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 disabled:opacity-30 text-sm font-bold shadow-sm hover:bg-zinc-800">← 前一天</button>
+                             <button onClick={handlePrevDay} disabled={currentDayIdx===0} className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 disabled:opacity-30 disabled:border-transparent text-sm font-bold shadow-sm hover:bg-zinc-800">← 前一天</button>
                              <button onClick={handleNextDay} disabled={currentDayIdx===ITINERARY_DATA.length-1} className="px-4 py-2 rounded-lg bg-sky-500 text-zinc-950 disabled:opacity-50 text-sm font-bold shadow-glow-primary hover:bg-sky-400">下一天 →</button>
                         </div>
                     </div>
@@ -389,26 +388,26 @@
                 <div className="h-full overflow-y-auto pb-24 px-4 py-6">
                      <header className="mb-6"><h2 className="text-2xl font-bold text-zinc-50 mb-4 px-2">優惠券</h2>
                         <div className="flex gap-2 overflow-x-auto no-scrollbar px-2">
-                            {['ALL', '藥妝', '百貨', '電器', '免稅店', '運動', '雜貨'].map(tag => (
+                            {['ALL', '藥妝', '百貨', '電器', '免稅店', '運動', '機場', '雜貨'].map(tag => (
                                 <button key={tag} onClick={() => setFilter(tag)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${filter === tag ? 'bg-sky-500 text-zinc-950 border-sky-400 shadow-glow-primary' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800'}`}>{tag}</button>
                             ))}
                         </div>
                     </header>
                     <div className="grid grid-cols-2 gap-3 px-2">
                         {COUPONS_DATA.filter(c => filter === 'ALL' || c.tags.includes(filter)).map((coupon, idx) => (
-                            <div key={idx} onClick={() => setSelectedCoupon(coupon)} className="app-card flex flex-col p-4 cursor-pointer group h-[110px] justify-between">
+                            <div key={idx} onClick={() => setSelectedCoupon(coupon)} className="app-card flex flex-col p-4 cursor-pointer group h-[110px] justify-between hover:border-sky-500/50 transition-colors">
                                 <div><div className="text-[9px] font-bold text-sky-400 bg-sky-900/30 px-1.5 py-0.5 rounded uppercase w-fit mb-1">{coupon.tags[0]}</div>
                                 <h3 className="font-bold text-zinc-100 text-base leading-tight truncate">{coupon.name}</h3></div>
-                                <div className="text-emerald-400 font-bold text-xs mt-1 truncate">{coupon.discount}</div>
+                                <div className="text-emerald-400 font-bold text-[11px] mt-1 truncate">{coupon.discount}</div>
                             </div>
                         ))}
                     </div>
                     {selectedCoupon && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedCoupon(null)}>
                             <div className="bg-zinc-900 rounded-2xl w-full max-w-sm overflow-hidden border border-zinc-700" onClick={e => e.stopPropagation()}>
-                                <div className="p-4 border-b border-zinc-800 flex justify-between bg-zinc-950"><h3 className="font-bold text-lg">{selectedCoupon.name}</h3><button onClick={() => setSelectedCoupon(null)}><IconWrapper name="x" className="w-5 h-5" /></button></div>
+                                <div className="p-4 border-b border-zinc-800 flex justify-between bg-zinc-950"><h3 className="font-bold text-zinc-100 text-lg">{selectedCoupon.name}</h3><button onClick={() => setSelectedCoupon(null)} className="p-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400"><IconWrapper name="x" className="w-4 h-4" /></button></div>
                                 <div className="p-4 bg-white min-h-[200px] flex items-center justify-center"><img src={selectedCoupon.final_url} className="max-w-full h-auto object-contain max-h-[50vh]" /></div>
-                                <div className="p-5 flex flex-col items-center bg-zinc-950"><p className="text-emerald-400 font-bold text-xl mb-1">{selectedCoupon.discount}</p><p className="text-xs text-zinc-500 mb-5">期限：{selectedCoupon.expiry}</p><a href={selectedCoupon.final_url} target="_blank" className="w-full py-3 rounded-xl bg-sky-500 text-zinc-950 font-bold text-center">儲存圖片 / 開啟大圖</a></div>
+                                <div className="p-5 flex flex-col items-center bg-zinc-950"><p className="text-emerald-400 font-bold text-xl mb-1 text-center">{selectedCoupon.discount}</p><p className="text-sm text-zinc-400 mb-5">期限：{selectedCoupon.expiry}</p><a href={selectedCoupon.final_url} target="_blank" className="w-full py-3 rounded-xl bg-sky-500 text-zinc-950 font-bold text-base text-center">儲存圖片 / 開啟大圖</a></div>
                             </div>
                         </div>
                     )}
