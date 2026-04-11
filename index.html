@@ -92,7 +92,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const CONFIG = { weatherApiBase: "https://archive-api.open-meteo.com/v1/archive" };
+        const CONFIG = { weatherApiBase: "https://api.open-meteo.com/v1/forecast" };
 
         const COUPONS_DATA = [
             { "name": "Donki唐吉訶德", "discount": "滿額免稅，最高再折7%", "expiry": "詳見圖片", "final_url": "https://japanportal.donki-global.com/coupon/?ptcd=0076003303", "tags": ["雜貨", "深夜"] },
@@ -240,12 +240,14 @@
             const [weather, setWeather] = useState(null);
             useEffect(() => {
                 const fetchWeather = async () => {
-                    const targetYear = 2025;
-                    const [y, m, d] = date.split('-');
                     try {
-                        const res = await fetch(`${CONFIG.weatherApiBase}?latitude=${lat}&longitude=${lon}&start_date=${targetYear}-${m}-${d}&end_date=${targetYear}-${m}-${d}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`);
+                        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&models=best_match`);
                         const data = await res.json();
-                        if (data.daily) setWeather({ code: data.daily.weather_code[0], max: data.daily.temperature_2m_max[0], min: data.daily.temperature_2m_min[0] });
+                        if (data.daily) setWeather({ 
+                            code: data.daily.weather_code[0], 
+                            max: Math.round(data.daily.temperature_2m_max[0]), 
+                            min: Math.round(data.daily.temperature_2m_min[0]) 
+                        });
                     } catch (e) { console.error(e); }
                 };
                 if (lat && lon) fetchWeather();
