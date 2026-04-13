@@ -117,7 +117,7 @@
             { "name": "Victoria運動用品", "discount": "免稅再折5%", "expiry": "詳見圖片", "final_url": "https://www.funtime.com.tw/travelstore/coupon/FunTime_Victoria_202606.jpg", "tags": ["運動"] }
         ];
 
-        // 終極完美主線 (無 Plan B, 無海鮮, 精確時間表)
+        // 終極完美主線 (已更新 4/18 住宿為 VIA INN 金澤)
         const ITINERARY_DATA = [
             {
                 id: 1, date: "2026-04-15", displayDate: "4/15 (三)", title: "抵達東京", city: "東京 (Tokyo)", lat: 35.6895, lon: 139.6917,
@@ -154,7 +154,7 @@
                     { time: "11:45 - 14:00", title: "無軌電車 & 室堂 (高潮！)", type: "spot", detail: "11:45 🚎 搭乘【立山隧道無軌電車】。\n12:00 📍 抵達室堂 (停留約 2 小時)。行「雪之大谷」感受 20 米高雪牆，然後食無海鮮午餐。", highlight: true,
                       recs: [{n: "室堂餐廳", t: "黑部豚肉拉麵", desc: "海拔最高拉麵店，熱呼呼豚肉湯頭"}]
                     },
-                    { time: "14:00 - 15:10", title: "高原巴士 & 美女平", type: "transport", detail: "14:00 🚌 搭乘【立山高原巴士】往美女平 (車程 50 分鐘，可以睡覺)。\n14:50 📍 抵達美女平，停留 20 分鐘排隊轉車。" },
+                    { time: "14:00 - 15:10", title: "高原巴士 & 美平", type: "transport", detail: "14:00 🚌 搭乘【立山高原巴士】往美女平 (車程 50 分鐘，可以睡覺)。\n14:50 📍 抵達美女平，停留 20 分鐘排隊轉車。" },
                     { time: "15:10 - 16:50", title: "下山往富山", type: "transport", detail: "15:10 🚋 搭乘【立山登山纜車】往立山站。\n15:40 🚆 轉乘【富山地方鐵道】前往電鐵富山站 (16:50抵達)。" },
                     { time: "17:20 - 17:45", title: "新幹線：富山 -> 金澤", type: "transport", detail: "🚄 轉乘北陸新幹線 Tsurugi (劍號)，自由席即可。", cost: "¥2,860" },
                     { time: "18:15", title: "入住東横INN金沢兼六園香林坊", type: "hotel", detail: "🎉 領取大行李！飯店位置極佳，明早步行去兼六園。" }
@@ -168,8 +168,8 @@
                       recs: [{n: "能登牛 壽司/串燒", t: "A5和牛", desc: "市場內有多家和牛攤檔，即叫即燒"}, {n: "金澤冠軍咖哩", t: "黑咖哩豬排", desc: "金澤特產：濃郁狂野嘅黑咖哩"}]
                     },
                     { time: "14:00 - 17:00", title: "21世紀美術館 / 東茶屋街", type: "spot", detail: "打卡泳池，或者去東茶屋街食「箔一」金箔冰淇淋。" },
-                    { time: "18:00 - 19:00", title: "更換飯店 (戰術移動)", type: "task", detail: "回香林坊取行李，搭公車移防至【金澤站東口】住宿，為明早搭巴士做準備。" },
-                    { time: "19:30", title: "入住東横INN金沢駅東口", type: "hotel", detail: "Check-in 放低行李。" },
+                    { time: "18:00 - 19:00", title: "更換飯店 (戰術移動)", type: "task", detail: "回香林坊取行李，搭公車移防至金澤站內的【VIA INN 金澤】住宿，為明早搭長途巴士做準備。" },
+                    { time: "19:30", title: "入住 VIA INN 金澤 (JR西日本集團)", type: "hotel", detail: "Check-in 放低行李。飯店就在 JR 金澤站內，極度方便！", highlight: true },
                     { time: "20:00", title: "金澤百番街晚餐", type: "food", detail: "直接喺車站入面搞掂晚餐。",
                       recs: [{n: "黑百合", t: "金澤關東煮", desc: "50年老字號，車麩同牛筋必點"}, {n: "麵屋大河", t: "味噌拉麵", desc: "金澤排名第一拉麵"}]
                     }
@@ -178,6 +178,7 @@
             {
                 id: 5, date: "2026-04-19", displayDate: "4/19 (日)", title: "高山賞櫻 & 古川祭", city: "高山/古川", lat: 36.1408, lon: 137.2513, note: "祭典高潮",
                 events: [
+                    { time: "07:50", title: "Check-out 及前往巴士站", type: "task", detail: "從 VIA INN 金澤退房。飯店位於車站內，直接步行至金澤站前 1 號巴士月台，極度方便！" },
                     { time: "08:10 - 10:25", title: "濃飛巴士往高山", type: "transport", detail: "帶住大喼搭乘濃飛巴士（需提前一個月預約）。大喼可放喺下層行李艙。", cost: "¥3,600" },
                     { time: "10:30", title: "先去飯店放低大喼", type: "task", detail: "抵達高山後立刻前往飯店寄放行李。只需步行約 2 分鐘，完美避開搶 Locker 災難！", address: "岐阜県高山市花里町6丁目105" },
                     { time: "11:00 - 13:00", title: "高山老街賞櫻午餐 🌸", type: "food", detail: "【全團最靚賞櫻位】中橋配櫻花！影完靚相再去老街掃街食嘢。", highlight: true,
